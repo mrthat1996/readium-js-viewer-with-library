@@ -1,0 +1,67 @@
+.list-items{
+	list-style: none;
+    padding: 10px;
+}
+.list-items li{
+	position: relative;
+    margin-bottom: 20px;
+    width: 175px;
+    height: 270px;
+    margin: 0 5px 10px 5px;
+    display: inline-block;
+    text-align: left;
+    color: white;
+    background-color: black;
+}
+.item-img{
+	display: block;
+    height: 100%;
+    width: 100%;
+    border: 1px solid #f0f0f0;
+    -webkit-transition: opacity 0.5s;
+    transition: opacity 0.5s;
+    background-size: cover !important;
+    background-position: center center;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+.item-img:hover{
+	opacity: 0.75;
+}
+.item-detail{
+ 	position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 15px;
+    width: 100%;
+    max-height: 215px;
+    overflow: hidden;
+    background: -moz-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 67%, rgba(0, 0, 0, 0.8) 100%);
+    background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 67%, rgba(0, 0, 0, 0.8) 100%);
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 67%, rgba(0, 0, 0, 0.8) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#cc000000',GradientType=0 );
+}
+.item-title{
+	white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+    cursor: pointer;
+}
+.item-title a{
+	color: white;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+}
+.item-data{
+	white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #10b591;
+}
+.item-attr{
+	color: #43f2cc;
+    font-weight: bold;
+    font-size: 14px;
+}
