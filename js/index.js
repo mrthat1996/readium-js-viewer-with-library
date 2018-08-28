@@ -1,4 +1,9 @@
 let PublicURL = window.location.origin;
+let params = getURLQueryParams();
+let libUrl = "http://lcp.trunguit.net:3000/opds2/publications.json";
+if (params['epub']) {
+    libUrl = params['epub'];
+}
 var ele_loading = document.getElementById('loading');
 var spinner = new Spinner().spin();
 ele_loading.appendChild(spinner.el);
@@ -6,6 +11,22 @@ ele_loading.appendChild(spinner.el);
 $(document).ready(function () {
     loadLibrary();
 });
+
+function getURLQueryParams() {
+    var params = {};
+    var query = window.location.search;
+    if (query && query.length) {
+        query = query.substring(1);
+        var keyParams = query.split('&');
+        for (var x = 0; x < keyParams.length; x++) {
+            var keyVal = keyParams[x].split('=');
+            if (keyVal.length > 1) {
+                params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+            }
+        }
+    }
+    return params;
+};
 
 function checkLicense(json) {
     var links = json.links;
@@ -60,6 +81,7 @@ function preloadEpub(link, ele) {
         },
         error: function (er) {
             ele.removeClass('animated').removeClass('bounce').removeClass('infinite');
+            window.location.href = './viewer.html?epub=' + encodeURIComponent(link);
             console.log(er);
         }
     });
@@ -123,33 +145,80 @@ function licenseCallback(data, manifest_link, ele) {
 
 function loadLibrary() {
     spinner.spin();
-    let libUrl = "http://lcp.trunguit.net:3000/opds2/publications.json";
     $.ajax({
         url: libUrl,
         type: 'GET',
         success: function (data, status) {
-            data.publications.forEach(publication => {
-                var title = publication.metadata.title;
-                var author = publication.metadata.author ? publication.metadata.author[0].name : "Author not spectified";
-                var cover = publication.images ? publication.images[0].href : "http://actar.com/wp-content/uploads/2015/12/nocover.jpg";
-                var href = publication.links[0].href;
-                var li = `<li>
-                            <a class="item-img" onclick="preloadEpub('${href}', $(this).parent())" style="background-image: url('${cover}')"></a>
-                            <div class="item-detail">
-                                <h5 class="item-title"><a
-                                        title="${title}">${title}</a></h5>
-                                <div class="item-data">
-                                    <small class="item-vol">${author}</small>
-                                </div>
-                            </div>
-                        </li>`;
-                $("#publications-list").append(li);
-            });
-            spinner.stop();
+            try {
+                var temp = JSON.stringify(data);
+                json = JSON.parse(temp);
+                Parse_Feed_JSON(json);
+            } catch (e) {
+                Parse_Feed_XML(data);
+            }
         },
         error: function (e) {
             spinner.stop();
             console.log(e);
         }
     });
+}
+
+function Parse_Feed_JSON(data) {
+    data.publications.forEach(publication => {
+        var title = publication.metadata.title;
+        var author = publication.metadata.author ? publication.metadata.author[0].name : "Author not spectified";
+        var cover = publication.images ? publication.images[0].href : "http://actar.com/wp-content/uploads/2015/12/nocover.jpg";
+        var href = publication.links[0].href;
+        var li = `<li>
+                    <a class="item-img" onclick="preloadEpub('${href}', $(this).parent())" style="background-image: url('${cover}')"></a>
+                    <div class="item-detail">
+                        <h5 class="item-title"><a
+                                title="${title}">${title}</a></h5>
+                        <div class="item-data">
+                            <small class="item-vol">${author}</small>
+                        </div>
+                    </div>
+                </li>`;
+        $("#publications-list").append(li);
+    });
+    spinner.stop();
+}
+
+function Parse_Feed_XML(data) {
+    parser = new DOMParser();
+    xmlDoc = parser.parseFromString(data, "text/xml");
+    epubs = xmlDoc.getElementsByTagName('entry');
+    console.log(epubs);
+    for (var i = 0; i < epubs.length - 1; i++) {
+        let title = epubs[i].getElementsByTagName('title')[0].innerHTML;
+        let author = epubs[i].getElementsByTagName('author')[0].innerHTML ? epubs[i].getElementsByTagName('author')[0].innerHTML : "Author not spectified";
+        let cover = "http://actar.com/wp-content/uploads/2015/12/nocover.jpg";
+        let links = epubs[i].getElementsByTagName('link');
+        let href = '#';
+        for (var j = 0; j < links.length; j++) {
+            const test_img = /image/g;
+            const test_epub = /epub/g;
+            if (test_img.test(links[j].getAttribute('type'))) {
+                cover = links[j].getAttribute('href');                
+            }
+            if (test_epub.test(links[j].getAttribute('type'))) {
+                href = links[j].getAttribute('href');
+            }
+            
+        }
+
+        let li = `<li>
+                    <a class="item-img" onclick="preloadEpub('${href}', $(this).parent())" style="background-image: url('${cover}')"></a>
+                    <div class="item-detail">
+                        <h5 class="item-title"><a
+                                title="${title}">${title}</a></h5>
+                        <div class="item-data">
+                            <small class="item-vol">${author}</small>
+                        </div>
+                    </div>
+                </li>`;
+        $("#publications-list").append(li);
+    }
+    spinner.stop();
 }

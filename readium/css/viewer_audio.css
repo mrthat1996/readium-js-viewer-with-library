@@ -113,6 +113,7 @@
     width: 10em;
     padding-left: 0;
     margin-left: 0;
+    display: inline-block;
 }
 #btn-audio-volume-mute,
 #btn-audio-volume-unmute {

@@ -1,0 +1,23 @@
+{
+  "name": "viewer",
+  "version": "1.0.0",
+  "description": "Manga viewer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrthat1996/readium-js-viewer-with-library.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mrthat1996/readium-js-viewer-with-library/issues"
+  },
+  "homepage": "https://github.com/mrthat1996/readium-js-viewer-with-library#readme",
+  "dependencies": {
+    "express": "^4.16.3",
+    "serve-static": "^1.13.2"
+  }
+}
