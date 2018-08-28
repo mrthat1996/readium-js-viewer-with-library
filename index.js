@@ -11,7 +11,7 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, './'));
 });
 
-const PORT = 4000;
+const PORT = 80;
 app.listen(PORT, () => {
     console.log(`Server: http://localhost:${PORT}`);
 });
