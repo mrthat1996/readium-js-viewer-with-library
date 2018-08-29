@@ -109,7 +109,9 @@ direction: rtl;
     border-radius: 0px !important;
     min-height: 36px;
     margin-bottom: 0px;
+    height: 54px !important;
 }
+
 
 .navbar-brand {
     padding: 11px 10px !important;

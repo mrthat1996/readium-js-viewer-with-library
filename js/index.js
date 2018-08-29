@@ -1,8 +1,8 @@
 let PublicURL = window.location.origin;
 let params = getURLQueryParams();
 let libUrl = "http://lcp.trunguit.net:3000/opds2/publications.json";
-if (params['epub']) {
-    libUrl = params['epub'];
+if (params['epubs']) {
+    libUrl = params['epubs'];
 }
 var ele_loading = document.getElementById('loading');
 var spinner = new Spinner().spin();
@@ -144,7 +144,6 @@ function licenseCallback(data, manifest_link, ele) {
 }
 
 function loadLibrary() {
-    spinner.spin();
     $.ajax({
         url: libUrl,
         type: 'GET',
@@ -182,6 +181,7 @@ function Parse_Feed_JSON(data) {
                 </li>`;
         $("#publications-list").append(li);
     });
+    $("#publications-list").addClass('pulse');
     spinner.stop();
 }
 
@@ -200,12 +200,12 @@ function Parse_Feed_XML(data) {
             const test_img = /image/g;
             const test_epub = /epub/g;
             if (test_img.test(links[j].getAttribute('type'))) {
-                cover = links[j].getAttribute('href');                
+                cover = links[j].getAttribute('href');
             }
             if (test_epub.test(links[j].getAttribute('type'))) {
                 href = links[j].getAttribute('href');
             }
-            
+
         }
 
         let li = `<li>
@@ -220,5 +220,6 @@ function Parse_Feed_XML(data) {
                 </li>`;
         $("#publications-list").append(li);
     }
+    $("#publications-list").addClass('pulse');
     spinner.stop();
 }
