@@ -53679,7 +53679,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"521b8e8f30af24e34cdb46fd6808c6cb46542942","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","tag":"0.31.0-alpha-0-g521b8e8","branch":"develop","release":false,"timestamp":1535429409659},"readiumJs":{"sha":"c26a9352839de4164766876681ae9415d432cecc","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-31-gc26a935","branch":"develop","release":false,"timestamp":1535429409997},"readiumSharedJs":{"sha":"7b99304a8883b541a5d43b3efa4157b3a1da4378","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-66-g7b99304","branch":"develop","release":false,"timestamp":1535429410301}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"521b8e8f30af24e34cdb46fd6808c6cb46542942","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","tag":"0.31.0-alpha-0-g521b8e8","branch":"develop","release":false,"timestamp":1535512355715},"readiumJs":{"sha":"c26a9352839de4164766876681ae9415d432cecc","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-31-gc26a935","branch":"develop","release":false,"timestamp":1535512356052},"readiumSharedJs":{"sha":"7b99304a8883b541a5d43b3efa4157b3a1da4378","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-66-g7b99304","branch":"develop","release":false,"timestamp":1535512356429}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -73886,7 +73886,8 @@ define('readium_js_viewer/EpubReader',[
     './versioning/ReadiumVersioning',
     'readium_js/Readium',
     'readium_shared_js/helpers',
-    'readium_shared_js/models/bookmark_data'],
+    'readium_shared_js/models/bookmark_data',
+    'readium_shared_js/models/spine_item'],
 
     function (
         globalSetup,
@@ -74264,13 +74265,15 @@ define('readium_js_viewer/EpubReader',[
                 if (!load_ads) {
                     //Add ads
                     var read = readium.reader.spine().items;
+                    var len = read.length;
                     read.push($.extend({}, read[0]));
-                    read[read.length - 1].index = read.length;
+                    read[read.length - 1].index = len;
                     read[read.length - 1].linear = 'yes';
                     read[read.length - 1].href = HTTPServerRootFolder + '/ads.xhtml'
+                    //read[read.length - 1].href = 'http://lcp.trunguit.net/ads.xhtml'
                     read[read.length - 1].idref = 'ads_5213';
                     read.push($.extend({}, read[read.length - 1]));
-                    read[read.length - 1].index = read.length;
+                    read[read.length - 1].index = len + 1;
                     read[read.length - 1].idref = 'review_5213';
                     load_ads = true;
                 }
@@ -74648,7 +74651,8 @@ define('readium_js_viewer/EpubReader',[
 
         var nextPage = function () {
             var idref = readium.reader.getPaginationInfo().openPages[0].idref;
-            if (idref == "ads_5213") {
+            var rtl = readium.reader.getCurrentView().getPaginationInfo().isRightToLeft;
+            if (idref == "ads_5213" && !rtl) {
                 window.location = `review.html?bookTitle=${currentPackageDocument.getMetadata().title}&backLink=${encodeURIComponent(ebookURL)}`;
             } else {
                 readium.reader.openPageRight();
@@ -74658,7 +74662,8 @@ define('readium_js_viewer/EpubReader',[
 
         var prevPage = function () {
             var idref = readium.reader.getPaginationInfo().openPages[0].idref;
-            if (idref == "ads_5213") {
+            var rtl = readium.reader.getCurrentView().getPaginationInfo().isRightToLeft;
+            if (idref == "ads_5213" && rtl) {
                 window.location = `review.html?bookTitle=${currentPackageDocument.getMetadata().title}&backLink=${encodeURIComponent(ebookURL)}`;
             } else {
                 readium.reader.openPageLeft();
