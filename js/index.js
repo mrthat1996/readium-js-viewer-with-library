@@ -163,10 +163,23 @@ function loadLibrary() {
     });
 }
 
+function mapArray(input){
+    var array = $.map(input, function(value, index) {
+        return [value];
+    });
+    return array;
+}
+
 function Parse_Feed_JSON(data) {
     data.publications.forEach(publication => {
         var title = publication.metadata.title;
+        if(typeof(title) == "object"){
+            title = mapArray(title)[0];
+        }
         var author = publication.metadata.author ? publication.metadata.author[0].name : "Author not spectified";
+        if(typeof(author) == 'object'){
+            author = mapArray(author)[0];
+        }
         var cover = publication.images ? publication.images[0].href : "http://actar.com/wp-content/uploads/2015/12/nocover.jpg";
         var href = publication.links[0].href;
         var li = `<li>
