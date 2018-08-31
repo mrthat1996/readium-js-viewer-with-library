@@ -39063,1130 +39063,1127 @@ var ViewerSettings = function(settingsData) {
 define('readium_shared_js/views/one_page_view',["../globals", "jquery", "underscore", "eventEmitter", "./cfi_navigation_logic", "../helpers", "../models/viewer_settings", "../models/bookmark_data", "ResizeSensor"],
     function (Globals, $, _, EventEmitter, CfiNavigationLogic, Helpers, ViewerSettings, BookmarkData, ResizeSensor) {
 
-/**
- * Renders one page of fixed layout spread
- *
- * @param options
- * @param classes
- * @param enableBookStyleOverrides
- * @constructor
- */
-var OnePageView = function (options, classes, enableBookStyleOverrides, reader) {
-
-    $.extend(this, new EventEmitter());
-
-    var self = this;
-
-    var _$epubHtml;
-    var _$epubBody;
-    var _$el;
-    var _$iframe;
-    var _currentSpineItem;
-    var _spine = options.spine;
-    var _iframeLoader = options.iframeLoader;
-    var _navigationLogic = undefined;
-    var _bookStyles = options.bookStyles;
-
-    var _$viewport = options.$viewport;
-
-    var _isIframeLoaded = false;
-
-    var _$scaler;
-
-    var _lastBodySize = {
-        width: undefined,
-        height: undefined
-    };
-
-    var PageTransitionHandler = function (opts) {
-        var PageTransition = function (begin, end) {
-            this.begin = begin;
-            this.end = end;
-        };
-
-        var _pageTransition_OPACITY = new PageTransition(
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("opacity", "0");
-            },
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("transform", "none");
-
-                Helpers.CSSTransition($el, "opacity 150ms ease-out");
-
-                $el.css("opacity", "1");
-            }
-        );
-
-        var _pageTransition_TRANSLATE = new PageTransition(
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("opacity", "0");
-
-                var elWidth = Math.ceil(meta_width * scale);
-
-                var initialLeft = elWidth * 0.8 * (pageSwitchDir === 2 ? 1 : -1);
-                var move = Helpers.CSSTransformString({
-                    left: Math.round(initialLeft),
-                    origin: "50% 50% 0",
-                    enable3D: _enable3D
-                });
-                $el.css(move);
-            },
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("opacity", "1");
-
-                Helpers.CSSTransition($el, "transform 150ms ease-out");
-
-                $el.css("transform", "none");
-            }
-        );
-
-        var _pageTransition_ROTATE = new PageTransition(
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("opacity", "0");
-
-                var elWidth = Math.ceil(meta_width * scale);
-
-                var initialLeft = elWidth * 1.7 * (pageSwitchDir === 2 ? 1 : -1);
-                var trans = Helpers.CSSTransformString({
-                    left: Math.round(initialLeft),
-                    angle: (pageSwitchDir === 2 ? -1 : 1) * 30,
-                    origin: "50% 50% 0",
-                    enable3D: _enable3D
-                }); //(pageSwitchDir === 2 ? '0% 0%' : '100% 0%')
-                $el.css(trans);
-            },
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("opacity", "1");
-
-                Helpers.CSSTransition($el, "transform 300ms ease-in-out");
-
-                $el.css("transform", "none");
-            }
-        );
-
-        var _pageTransition_SWING = new PageTransition(
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("opacity", "0");
-
-                // SUPER HACKY!! (just for demo)
-                var isLeft = false;
-                var isCenter = false;
-                var isRight = false;
-                for (var i = 0; i < classes.length; i++) {
-                    var c = classes[i].toLowerCase();
-                    if (c.indexOf("left") >= 0) {
-                        isLeft = true;
-                        break;
-                    }
-                    if (c.indexOf("right") >= 0) {
-                        isRight = true;
-                        break;
-                    }
-                    if (c.indexOf("center") >= 0) {
-                        isCenter = true;
-                        break;
-                    }
-                }
-
-                var elWidth = Math.ceil(meta_width * scale);
-
-                var initialLeft = elWidth * 0.5 * ((isLeft || isCenter && pageSwitchDir === 1) ? 1 : -1);
-                var trans = Helpers.CSSTransformString({
-                    scale: 0.2,
-                    left: Math.round(initialLeft),
-                    angle: ((isLeft || isCenter && pageSwitchDir === 1) ? 1 : -1) * 30,
-                    origin: '50% 50% 0',
-                    enable3D: _enable3D
-                });
-                $el.css(trans);
-            },
-            function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
-                $el.css("opacity", "1");
-
-                Helpers.CSSTransition($el, "transform 400ms ease-out");
-
-                $el.css("transform", "none");
-            }
-        );
-
-        var _pageTransitions = [];
-        _pageTransitions.push(_pageTransition_OPACITY); // 0
-        _pageTransitions.push(_pageTransition_TRANSLATE); // 1
-        _pageTransitions.push(_pageTransition_ROTATE); // 2
-        _pageTransitions.push(_pageTransition_SWING); // 3
-
-        var _disablePageTransitions = opts.disablePageTransitions || false;
-                
-        // TODO: page transitions are broken, sp we disable them to avoid nasty visual artefacts
-        _disablePageTransitions = true;
-
-        var _pageTransition = -1;
-
-        var _enable3D = new ViewerSettings({}).enableGPUHardwareAccelerationCSS3D;
-
-        var _viewerSettings = undefined;
-        this.updateOptions = function (o) {
-            _viewerSettings = o;
-
-            var settings = _viewerSettings;
-            if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
-                //defaults
-                settings = new ViewerSettings({});
-            }
-            if (settings.enableGPUHardwareAccelerationCSS3D) {
-                _enable3D = true;
-            }
-
-            if (o.pageTransition !== null && typeof o.pageTransition !== "undefined") {
-                _pageTransition = o.pageTransition;
-            }
-        };
-        this.updateOptions(opts);
-
-        var _pageSwitchDir = 0;
-        var _pageSwitchActuallyChanged = false;
-        var _pageSwitchActuallyChanged_IFRAME_LOAD = false;
-
-        // dir: 0 => new or same page, 1 => previous, 2 => next
-        this.updatePageSwitchDir = function (dir, hasChanged) {
-            if (_pageSwitchActuallyChanged_IFRAME_LOAD) {
-                return;
-            }
-
-            _pageSwitchDir = dir;
-            _pageSwitchActuallyChanged = hasChanged;
-        };
-
-        this.onIFrameLoad = function () {
-            _pageSwitchActuallyChanged_IFRAME_LOAD = true; // second pass, but initial display for transition
-        };
-
-        this.transformContentImmediate_BEGIN = function ($el, scale, left, top) {
-            var pageSwitchActuallyChanged = _pageSwitchActuallyChanged || _pageSwitchActuallyChanged_IFRAME_LOAD;
-            _pageSwitchActuallyChanged_IFRAME_LOAD = false;
-
-            if (_disablePageTransitions || _pageTransition === -1) return;
-
-            Helpers.CSSTransition($el, "all 0 ease 0");
-
-            if (!pageSwitchActuallyChanged) return;
-
-            var pageTransition = (_pageTransition >= 0 && _pageTransition < _pageTransitions.length) ? _pageTransitions[_pageTransition] : undefined;
-
-            if (_pageSwitchDir === 0 || !pageTransition) {
-                $el.css("opacity", "0");
-            }
-            else {
-                pageTransition.begin(scale, left, top, $el, self.meta_width(), self.meta_height(), _pageSwitchDir);
-            }
-        };
-
-        this.transformContentImmediate_END = function ($el, scale, left, top) {
-            if (_disablePageTransitions || _pageTransition === -1) {
-                $el.css("transform", "none");
-                return;
-            }
-
-            setTimeout(function () {
-                var pageTransition = (_pageTransition >= 0 && _pageTransition < _pageTransitions.length) ? _pageTransitions[_pageTransition] : undefined;
-
-                if (_pageSwitchDir === 0 || !pageTransition) {
-                    $el.css("transform", "none");
-
-                    Helpers.CSSTransition($el, "opacity 250ms linear");
-
-                    $el.css("opacity", "1");
-                }
-                else {
-                    pageTransition.end(scale, left, top, $el, self.meta_width(), self.meta_height(), _pageSwitchDir);
-                }
-
-            }, 10);
-        };
-    };
-    var _pageTransitionHandler = new PageTransitionHandler(options);
-
-
-    // fixed layout does not apply user styles to publisher content, but reflowable scroll view does
-    var _enableBookStyleOverrides = enableBookStyleOverrides || false;
-
-    var _meta_size = {
-        width: 0,
-        height: 0
-    };
-
-    this.element = function () {
-        return _$el;
-    };
-
-    this.meta_height = function () {
-        return _meta_size.height;
-    };
-
-    this.meta_width = function () {
-        return _meta_size.width;
-    };
-
-    this.isDisplaying = function () {
-
-        return _isIframeLoaded; //_$iframe && _$iframe[0] && _$epubHtml
-    };
-
-    this.render = function () {
-
-        var template = Helpers.loadTemplate("single_page_frame", {});
-
-        _$el = $(template);
-
-        _$scaler = $("#scaler", _$el);
-
-        Helpers.CSSTransition(_$el, "all 0 ease 0");
-
-        _$el.css("transform", "none");
-
-        var settings = reader.viewerSettings();
-        if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
-            //defaults
-            settings = new ViewerSettings({});
-        }
-        if (settings.enableGPUHardwareAccelerationCSS3D) {
-
-            // This fixes rendering issues with WebView (native apps), which crops content embedded in iframes unless GPU hardware acceleration is enabled for CSS rendering.
-            _$el.css("transform", "translateZ(0)");
-        }
-
-        _$el.css("height", "100%");
-        _$el.css("width", "100%");
-
-        for (var i = 0, count = classes.length; i < count; i++) {
-            _$el.addClass(classes[i]);
-        }
-
-        _$iframe = $("iframe", _$el);
-
-        return this;
-    };
-
-
-    this.decorateIframe = function () {
-        if (!_$iframe || !_$iframe.length) return;
-
-        _$iframe.css("border-bottom", "1px dashed silver");
-        _$iframe.css("border-top", "1px dashed silver");
-    };
-
-    this.remove = function () {
-        this.clear();
-        
-        _currentSpineItem = undefined;
-        
-        if (_$el && _$el[0]) {
-            _$el.remove();
-        }
-        
-        _$el = undefined;
-        _$scaler = undefined;
-        _$iframe = undefined;
-    };
-
-    this.clear = function () {
-        _isIframeLoaded = false;
-        
-        if (_$iframe && _$iframe[0]) {
-            _$iframe[0].src = "";
-        }
-    };
-
-    this.currentSpineItem = function () {
-
-        return _currentSpineItem;
-    };
-
-    function onIFrameLoad(success) {
-
-        if (success) {
-            _isIframeLoaded = true;
-            var epubContentDocument = _$iframe[0].contentDocument;
-            _$epubHtml = $("html", epubContentDocument);
-            if (!_$epubHtml || _$epubHtml.length == 0) {
-                _$epubHtml = $("svg", epubContentDocument);
-                _$epubBody = undefined;
-            } else {
-                _$epubBody = $("body", _$epubHtml);
-
-                if (!_enableBookStyleOverrides) { // fixed layout
-                    _$epubBody.css("margin", "0"); // ensures 8px margin default user agent stylesheet is reset to zero
-                }
-            }
-
-            //_$epubHtml.css("overflow", "hidden");
-
-            if (_enableBookStyleOverrides) { // not fixed layout (reflowable in scroll view)
-                self.applyBookStyles();
-            }
-
-            updateMetaSize();
-
-            initResizeSensor();
-
-            _pageTransitionHandler.onIFrameLoad();
-        }
-    }
-
-    function initResizeSensor() {
-
-        if (_$epubBody // undefined with SVG spine items
-            && _enableBookStyleOverrides // not fixed layout (reflowable in scroll view)
-            ) {
-
-            var bodyElement = _$epubBody[0];
-            if (bodyElement.resizeSensor) {
-                return;
-            }
-
-            // We need to make sure the content has indeed be resized, especially
-            // the first time it is triggered
-            _lastBodySize.width = $(bodyElement).width();
-            _lastBodySize.height = $(bodyElement).height();
-
-            bodyElement.resizeSensor = new ResizeSensor(bodyElement, function() {
-
-                var newBodySize = {
-                    width: $(bodyElement).width(),
-                    height: $(bodyElement).height()
+        /**
+         * Renders one page of fixed layout spread
+         *
+         * @param options
+         * @param classes
+         * @param enableBookStyleOverrides
+         * @constructor
+         */
+        var OnePageView = function (options, classes, enableBookStyleOverrides, reader) {
+
+            $.extend(this, new EventEmitter());
+
+            var self = this;
+
+            var _$epubHtml;
+            var _$epubBody;
+            var _$el;
+            var _$iframe;
+            var _currentSpineItem;
+            var _spine = options.spine;
+            var _iframeLoader = options.iframeLoader;
+            var _navigationLogic = undefined;
+            var _bookStyles = options.bookStyles;
+
+            var _$viewport = options.$viewport;
+
+            var _isIframeLoaded = false;
+
+            var _$scaler;
+
+            var _lastBodySize = {
+                width: undefined,
+                height: undefined
+            };
+
+            var PageTransitionHandler = function (opts) {
+                var PageTransition = function (begin, end) {
+                    this.begin = begin;
+                    this.end = end;
                 };
 
-                console.debug("OnePageView content resized ...", newBodySize.width, newBodySize.height, _currentSpineItem.idref);
-                
-                if (newBodySize.width != _lastBodySize.width || newBodySize.height != _lastBodySize.height) {
-                    _lastBodySize.width = newBodySize.width;
-                    _lastBodySize.height = newBodySize.height;
+                var _pageTransition_OPACITY = new PageTransition(
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("opacity", "0");
+                    },
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("transform", "none");
 
-                    console.debug("... updating pagination.");
+                        Helpers.CSSTransition($el, "opacity 150ms ease-out");
 
-                    var src = _spine.package.resolveRelativeUrl(_currentSpineItem.href);
+                        $el.css("opacity", "1");
+                    }
+                );
 
-                    Globals.logEvent("OnePageView.Events.CONTENT_SIZE_CHANGED", "EMIT", "one_page_view.js [ " + _currentSpineItem.href + " -- " + src + " ]");
-                    
-                    self.emit(OnePageView.Events.CONTENT_SIZE_CHANGED, _$iframe, _currentSpineItem);
-                    
-                    //updatePagination();
-                } else {
-                    console.debug("... ignored (identical dimensions).");
+                var _pageTransition_TRANSLATE = new PageTransition(
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("opacity", "0");
+
+                        var elWidth = Math.ceil(meta_width * scale);
+
+                        var initialLeft = elWidth * 0.8 * (pageSwitchDir === 2 ? 1 : -1);
+                        var move = Helpers.CSSTransformString({
+                            left: Math.round(initialLeft),
+                            origin: "50% 50% 0",
+                            enable3D: _enable3D
+                        });
+                        $el.css(move);
+                    },
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("opacity", "1");
+
+                        Helpers.CSSTransition($el, "transform 150ms ease-out");
+
+                        $el.css("transform", "none");
+                    }
+                );
+
+                var _pageTransition_ROTATE = new PageTransition(
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("opacity", "0");
+
+                        var elWidth = Math.ceil(meta_width * scale);
+
+                        var initialLeft = elWidth * 1.7 * (pageSwitchDir === 2 ? 1 : -1);
+                        var trans = Helpers.CSSTransformString({
+                            left: Math.round(initialLeft),
+                            angle: (pageSwitchDir === 2 ? -1 : 1) * 30,
+                            origin: "50% 50% 0",
+                            enable3D: _enable3D
+                        }); //(pageSwitchDir === 2 ? '0% 0%' : '100% 0%')
+                        $el.css(trans);
+                    },
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("opacity", "1");
+
+                        Helpers.CSSTransition($el, "transform 300ms ease-in-out");
+
+                        $el.css("transform", "none");
+                    }
+                );
+
+                var _pageTransition_SWING = new PageTransition(
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("opacity", "0");
+
+                        // SUPER HACKY!! (just for demo)
+                        var isLeft = false;
+                        var isCenter = false;
+                        var isRight = false;
+                        for (var i = 0; i < classes.length; i++) {
+                            var c = classes[i].toLowerCase();
+                            if (c.indexOf("left") >= 0) {
+                                isLeft = true;
+                                break;
+                            }
+                            if (c.indexOf("right") >= 0) {
+                                isRight = true;
+                                break;
+                            }
+                            if (c.indexOf("center") >= 0) {
+                                isCenter = true;
+                                break;
+                            }
+                        }
+
+                        var elWidth = Math.ceil(meta_width * scale);
+
+                        var initialLeft = elWidth * 0.5 * ((isLeft || isCenter && pageSwitchDir === 1) ? 1 : -1);
+                        var trans = Helpers.CSSTransformString({
+                            scale: 0.2,
+                            left: Math.round(initialLeft),
+                            angle: ((isLeft || isCenter && pageSwitchDir === 1) ? 1 : -1) * 30,
+                            origin: '50% 50% 0',
+                            enable3D: _enable3D
+                        });
+                        $el.css(trans);
+                    },
+                    function (scale, left, top, $el, meta_width, meta_height, pageSwitchDir) {
+                        $el.css("opacity", "1");
+
+                        Helpers.CSSTransition($el, "transform 400ms ease-out");
+
+                        $el.css("transform", "none");
+                    }
+                );
+
+                var _pageTransitions = [];
+                _pageTransitions.push(_pageTransition_OPACITY); // 0
+                _pageTransitions.push(_pageTransition_TRANSLATE); // 1
+                _pageTransitions.push(_pageTransition_ROTATE); // 2
+                _pageTransitions.push(_pageTransition_SWING); // 3
+
+                var _disablePageTransitions = opts.disablePageTransitions || false;
+
+                // TODO: page transitions are broken, sp we disable them to avoid nasty visual artefacts
+                _disablePageTransitions = true;
+
+                var _pageTransition = -1;
+
+                var _enable3D = new ViewerSettings({}).enableGPUHardwareAccelerationCSS3D;
+
+                var _viewerSettings = undefined;
+                this.updateOptions = function (o) {
+                    _viewerSettings = o;
+
+                    var settings = _viewerSettings;
+                    if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
+                        //defaults
+                        settings = new ViewerSettings({});
+                    }
+                    if (settings.enableGPUHardwareAccelerationCSS3D) {
+                        _enable3D = true;
+                    }
+
+                    if (o.pageTransition !== null && typeof o.pageTransition !== "undefined") {
+                        _pageTransition = o.pageTransition;
+                    }
+                };
+                this.updateOptions(opts);
+
+                var _pageSwitchDir = 0;
+                var _pageSwitchActuallyChanged = false;
+                var _pageSwitchActuallyChanged_IFRAME_LOAD = false;
+
+                // dir: 0 => new or same page, 1 => previous, 2 => next
+                this.updatePageSwitchDir = function (dir, hasChanged) {
+                    if (_pageSwitchActuallyChanged_IFRAME_LOAD) {
+                        return;
+                    }
+
+                    _pageSwitchDir = dir;
+                    _pageSwitchActuallyChanged = hasChanged;
+                };
+
+                this.onIFrameLoad = function () {
+                    _pageSwitchActuallyChanged_IFRAME_LOAD = true; // second pass, but initial display for transition
+                };
+
+                this.transformContentImmediate_BEGIN = function ($el, scale, left, top) {
+                    var pageSwitchActuallyChanged = _pageSwitchActuallyChanged || _pageSwitchActuallyChanged_IFRAME_LOAD;
+                    _pageSwitchActuallyChanged_IFRAME_LOAD = false;
+
+                    if (_disablePageTransitions || _pageTransition === -1) return;
+
+                    Helpers.CSSTransition($el, "all 0 ease 0");
+
+                    if (!pageSwitchActuallyChanged) return;
+
+                    var pageTransition = (_pageTransition >= 0 && _pageTransition < _pageTransitions.length) ? _pageTransitions[_pageTransition] : undefined;
+
+                    if (_pageSwitchDir === 0 || !pageTransition) {
+                        $el.css("opacity", "0");
+                    }
+                    else {
+                        pageTransition.begin(scale, left, top, $el, self.meta_width(), self.meta_height(), _pageSwitchDir);
+                    }
+                };
+
+                this.transformContentImmediate_END = function ($el, scale, left, top) {
+                    if (_disablePageTransitions || _pageTransition === -1) {
+                        $el.css("transform", "none");
+                        return;
+                    }
+
+                    setTimeout(function () {
+                        var pageTransition = (_pageTransition >= 0 && _pageTransition < _pageTransitions.length) ? _pageTransitions[_pageTransition] : undefined;
+
+                        if (_pageSwitchDir === 0 || !pageTransition) {
+                            $el.css("transform", "none");
+
+                            Helpers.CSSTransition($el, "opacity 250ms linear");
+
+                            $el.css("opacity", "1");
+                        }
+                        else {
+                            pageTransition.end(scale, left, top, $el, self.meta_width(), self.meta_height(), _pageSwitchDir);
+                        }
+
+                    }, 10);
+                };
+            };
+            var _pageTransitionHandler = new PageTransitionHandler(options);
+
+
+            // fixed layout does not apply user styles to publisher content, but reflowable scroll view does
+            var _enableBookStyleOverrides = enableBookStyleOverrides || false;
+
+            var _meta_size = {
+                width: 0,
+                height: 0
+            };
+
+            this.element = function () {
+                return _$el;
+            };
+
+            this.meta_height = function () {
+                return _meta_size.height;
+            };
+
+            this.meta_width = function () {
+                return _meta_size.width;
+            };
+
+            this.isDisplaying = function () {
+
+                return _isIframeLoaded; //_$iframe && _$iframe[0] && _$epubHtml
+            };
+
+            this.render = function () {
+
+                var template = Helpers.loadTemplate("single_page_frame", {});
+
+                _$el = $(template);
+
+                _$scaler = $("#scaler", _$el);
+
+                Helpers.CSSTransition(_$el, "all 0 ease 0");
+
+                _$el.css("transform", "none");
+
+                var settings = reader.viewerSettings();
+                if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
+                    //defaults
+                    settings = new ViewerSettings({});
                 }
-            });
-        }
-    }
-    
-    var _viewSettings = undefined;
-    this.setViewSettings = function (settings, docWillChange) {
+                if (settings.enableGPUHardwareAccelerationCSS3D) {
 
-        _viewSettings = settings;
+                    // This fixes rendering issues with WebView (native apps), which crops content embedded in iframes unless GPU hardware acceleration is enabled for CSS rendering.
+                    _$el.css("transform", "translateZ(0)");
+                }
 
-        if (_enableBookStyleOverrides  // not fixed layout (reflowable in scroll view)
-            && !docWillChange) {
-            self.applyBookStyles();
-        }
+                _$el.css("height", "100%");
+                _$el.css("width", "100%");
 
-        updateMetaSize();
+                for (var i = 0, count = classes.length; i < count; i++) {
+                    _$el.addClass(classes[i]);
+                }
 
-        _pageTransitionHandler.updateOptions(settings);
-    };
+                _$iframe = $("iframe", _$el);
 
-    function updateHtmlFontInfo() {
+                return this;
+            };
 
-        if (!_enableBookStyleOverrides) return;  // fixed layout (not reflowable in scroll view)
 
-        if (_$epubHtml && _viewSettings) {
-            var i = _viewSettings.fontSelection;
-            var useDefault = !reader.fonts || !reader.fonts.length || i <= 0 || (i-1) >= reader.fonts.length;
-            var font = (useDefault ?
+            this.decorateIframe = function () {
+                if (!_$iframe || !_$iframe.length) return;
+
+                _$iframe.css("border-bottom", "1px dashed silver");
+                _$iframe.css("border-top", "1px dashed silver");
+            };
+
+            this.remove = function () {
+                this.clear();
+
+                _currentSpineItem = undefined;
+
+                if (_$el && _$el[0]) {
+                    _$el.remove();
+                }
+
+                _$el = undefined;
+                _$scaler = undefined;
+                _$iframe = undefined;
+            };
+
+            this.clear = function () {
+                _isIframeLoaded = false;
+
+                if (_$iframe && _$iframe[0]) {
+                    _$iframe[0].src = "";
+                }
+            };
+
+            this.currentSpineItem = function () {
+
+                return _currentSpineItem;
+            };
+
+            function onIFrameLoad(success) {
+
+                if (success) {
+                    _isIframeLoaded = true;
+                    var epubContentDocument = _$iframe[0].contentDocument;
+                    _$epubHtml = $("html", epubContentDocument);
+                    if (!_$epubHtml || _$epubHtml.length == 0) {
+                        _$epubHtml = $("svg", epubContentDocument);
+                        _$epubBody = undefined;
+                    } else {
+                        _$epubBody = $("body", _$epubHtml);
+
+                        if (!_enableBookStyleOverrides) { // fixed layout
+                            _$epubBody.css("margin", "0"); // ensures 8px margin default user agent stylesheet is reset to zero
+                        }
+                    }
+
+                    //_$epubHtml.css("overflow", "hidden");
+
+                    if (_enableBookStyleOverrides) { // not fixed layout (reflowable in scroll view)
+                        self.applyBookStyles();
+                    }
+
+                    updateMetaSize();
+
+                    initResizeSensor();
+
+                    _pageTransitionHandler.onIFrameLoad();
+                }
+            }
+
+            function initResizeSensor() {
+
+                if (_$epubBody // undefined with SVG spine items
+                    && _enableBookStyleOverrides // not fixed layout (reflowable in scroll view)
+                ) {
+
+                    var bodyElement = _$epubBody[0];
+                    if (bodyElement.resizeSensor) {
+                        return;
+                    }
+
+                    // We need to make sure the content has indeed be resized, especially
+                    // the first time it is triggered
+                    _lastBodySize.width = $(bodyElement).width();
+                    _lastBodySize.height = $(bodyElement).height();
+
+                    bodyElement.resizeSensor = new ResizeSensor(bodyElement, function () {
+
+                        var newBodySize = {
+                            width: $(bodyElement).width(),
+                            height: $(bodyElement).height()
+                        };
+
+                        console.debug("OnePageView content resized ...", newBodySize.width, newBodySize.height, _currentSpineItem.idref);
+
+                        if (newBodySize.width != _lastBodySize.width || newBodySize.height != _lastBodySize.height) {
+                            _lastBodySize.width = newBodySize.width;
+                            _lastBodySize.height = newBodySize.height;
+
+                            console.debug("... updating pagination.");
+
+                            var src = _spine.package.resolveRelativeUrl(_currentSpineItem.href);
+
+                            Globals.logEvent("OnePageView.Events.CONTENT_SIZE_CHANGED", "EMIT", "one_page_view.js [ " + _currentSpineItem.href + " -- " + src + " ]");
+
+                            self.emit(OnePageView.Events.CONTENT_SIZE_CHANGED, _$iframe, _currentSpineItem);
+
+                            //updatePagination();
+                        } else {
+                            console.debug("... ignored (identical dimensions).");
+                        }
+                    });
+                }
+            }
+
+            var _viewSettings = undefined;
+            this.setViewSettings = function (settings, docWillChange) {
+
+                _viewSettings = settings;
+
+                if (_enableBookStyleOverrides  // not fixed layout (reflowable in scroll view)
+                    && !docWillChange) {
+                    self.applyBookStyles();
+                }
+
+                updateMetaSize();
+
+                _pageTransitionHandler.updateOptions(settings);
+            };
+
+            function updateHtmlFontInfo() {
+
+                if (!_enableBookStyleOverrides) return;  // fixed layout (not reflowable in scroll view)
+
+                if (_$epubHtml && _viewSettings) {
+                    var i = _viewSettings.fontSelection;
+                    var useDefault = !reader.fonts || !reader.fonts.length || i <= 0 || (i - 1) >= reader.fonts.length;
+                    var font = (useDefault ?
                         {} :
                         reader.fonts[i - 1]);
-            Helpers.UpdateHtmlFontAttributes(_$epubHtml, _viewSettings.fontSize, font, function() {});
-        }
-    }
-
-    this.applyBookStyles = function () {
-
-        if (!_enableBookStyleOverrides) return;  // fixed layout (not reflowable in scroll view)
-
-        if (_$epubHtml) {
-            Helpers.setStyles(_bookStyles.getStyles(), _$epubHtml);
-            updateHtmlFontInfo();
-        }
-    };
-
-    //this is called by scroll_view for fixed spine item
-    this.scaleToWidth = function (width) {
-
-        if (_enableBookStyleOverrides) return;  // not fixed layout (reflowable in scroll view)
-
-        if (_meta_size.width <= 0) return; // resize event too early!
-
-        var scale = width / _meta_size.width;
-        self.transformContentImmediate(scale, 0, 0);
-    };
-
-    //this is called by scroll_view for reflowable spine item
-    this.resizeIFrameToContent = function () {
-        var contHeight = getContentDocHeight();
-        //console.log("resizeIFrameToContent: " + contHeight);
-
-        self.setHeight(contHeight);
-
-        self.showIFrame();
-    };
-
-    this.setHeight = function (height) {
-
-        _$scaler.css("height", height + "px");
-        _$el.css("height", height + "px");
-
-//        _$iframe.css("height", height + "px");
-    };
-
-    var _useCSSTransformToHideIframe = true;
-
-    this.showIFrame = function () {
-
-        _$iframe.css("visibility", "visible");
-
-        if (_useCSSTransformToHideIframe) {
-            _$iframe.css("transform", "none");
-
-            var enable3D = false;
-            var settings = _viewSettings;
-            if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
-                //defaults
-                settings = new ViewerSettings({});
-            }
-            if (settings.enableGPUHardwareAccelerationCSS3D) {
-                enable3D = true;
-                _$iframe.css("transform", "translateZ(0)");
-            }
-        }
-        else {
-            _$iframe.css({left: "0px", top: "0px"});
-        }
-    };
-
-    this.hideIFrame = function () {
-
-        _$iframe.css("visibility", "hidden");
-
-        // With some books, despite the iframe and its containing div wrapper being hidden,
-        // the iframe's contentWindow / contentDocument is still visible!
-        // Thus why we translate the iframe out of view instead.
-
-        if (_useCSSTransformToHideIframe) {
-            var enable3D = false;
-            var settings = _viewSettings;
-            if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
-                //defaults
-                settings = new ViewerSettings({});
-            }
-            if (settings.enableGPUHardwareAccelerationCSS3D) {
-                enable3D = true;
+                    Helpers.UpdateHtmlFontAttributes(_$epubHtml, _viewSettings.fontSize, font, function () { });
+                }
             }
 
-            var css = Helpers.CSSTransformString({left: "10000", top: "10000", enable3D: enable3D});
-            _$iframe.css(css);
-        }
-        else {
-            _$iframe.css({left: "10000px", top: "10000px"});
-        }
-    };
+            this.applyBookStyles = function () {
 
-    function getContentDocHeight() {
+                if (!_enableBookStyleOverrides) return;  // fixed layout (not reflowable in scroll view)
 
-        if (!_$iframe || !_$iframe.length) {
-            return 0;
-        }
+                if (_$epubHtml) {
+                    Helpers.setStyles(_bookStyles.getStyles(), _$epubHtml);
+                    updateHtmlFontInfo();
+                }
+            };
 
-        if (Helpers.isIframeAlive(_$iframe[0])) {
-            var win = _$iframe[0].contentWindow;
-            var doc = _$iframe[0].contentDocument;
+            //this is called by scroll_view for fixed spine item
+            this.scaleToWidth = function (width) {
 
-            var height = Math.round(parseFloat(win.getComputedStyle(doc.documentElement).height)); //body can be shorter!
-            return height;
-        }
-        else if (_$epubHtml) {
-            console.error("getContentDocHeight ??");
+                if (_enableBookStyleOverrides) return;  // not fixed layout (reflowable in scroll view)
 
-            var jqueryHeight = _$epubHtml.height();
-            return jqueryHeight;
-        }
+                if (_meta_size.width <= 0) return; // resize event too early!
 
-        return 0;
-    }
+                var scale = width / _meta_size.width;
+                self.transformContentImmediate(scale, 0, 0);
+            };
 
-    // dir: 0 => new or same page, 1 => previous, 2 => next
-    this.updatePageSwitchDir = function (dir, hasChanged) {
-        _pageTransitionHandler.updatePageSwitchDir(dir, hasChanged);
-    };
+            //this is called by scroll_view for reflowable spine item
+            this.resizeIFrameToContent = function () {
+                var contHeight = getContentDocHeight();
+                //console.log("resizeIFrameToContent: " + contHeight);
 
+                self.setHeight(contHeight);
 
-    this.transformContentImmediate = function (scale, left, top) {
+                self.showIFrame();
+            };
 
-        if (_enableBookStyleOverrides) return;  // not fixed layout (reflowable in scroll view)
+            this.setHeight = function (height) {
+                _$scaler.css("height", height + "px");
+                _$el.css("height", height + "px");
+                //        _$iframe.css("height", height + "px");
+            };
 
-        var elWidth = Math.ceil(_meta_size.width * scale);
-        var elHeight = Math.floor(_meta_size.height * scale);
+            var _useCSSTransformToHideIframe = true;
 
-        _pageTransitionHandler.transformContentImmediate_BEGIN(_$el, scale, left, top);
+            this.showIFrame = function () {
 
-        _$el.css("left", left + "px");
-        _$el.css("top", top + "px");
-        _$el.css("width", elWidth + "px");
-        _$el.css("height", elHeight + "px");
+                _$iframe.css("visibility", "visible");
 
-        if (!_$epubHtml) {
-//                  debugger;
-            return;
-        }
+                if (_useCSSTransformToHideIframe) {
+                    _$iframe.css("transform", "none");
 
-        var enable3D = false;
-        var settings = _viewSettings;
-        if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
-            //defaults
-            settings = new ViewerSettings({});
-        }
-        if (settings.enableGPUHardwareAccelerationCSS3D) {
-            enable3D = true;
-        }
-        
-        if (_$epubBody // not SVG spine item (otherwise fails in Safari OSX)
-            && reader.needsFixedLayoutScalerWorkAround()) {
-
-            var css1 = Helpers.CSSTransformString({scale: scale, enable3D: enable3D});
-            
-            // See https://github.com/readium/readium-shared-js/issues/285 
-            css1["min-width"] = _meta_size.width;
-            css1["min-height"] = _meta_size.height;
-            
-            _$epubHtml.css(css1);
-
-            // Ensures content dimensions matches viewport meta (authors / production tools should do this in their CSS...but unfortunately some don't).
-            if (_$epubBody && _$epubBody.length) {
-                _$epubBody.css({width:_meta_size.width, height:_meta_size.height});
-            }
-
-            var css2 = Helpers.CSSTransformString({scale : 1, enable3D: enable3D});
-            css2["width"] = _meta_size.width * scale;
-            css2["height"] = _meta_size.height * scale;
-
-            _$scaler.css(css2);
-        }
-        else {
-            var css = Helpers.CSSTransformString({scale: scale, enable3D: enable3D});
-            css["width"] = _meta_size.width;
-            css["height"] = _meta_size.height;
-            _$scaler.css(css);
-        }
-
-        // Chrome workaround: otherwise text is sometimes invisible (probably a rendering glitch due to the 3D transform graphics backend?)
-        //_$epubHtml.css("visibility", "hidden"); // "flashing" in two-page spread mode is annoying :(
-        _$epubHtml.css("opacity", "0.999");
-
-        self.showIFrame();
-
-        setTimeout(function () {
-            //_$epubHtml.css("visibility", "visible");
-            _$epubHtml.css("opacity", "1");
-        }, 0);
-        
-        // TODO: the CSS transitions do not work anymore, tested on Firefox and Chrome.
-        // The line of code below still needs to be invoked, but the logic in _pageTransitionHandler probably need adjusting to work around the animation timing issue.
-        // PS: opacity=1 above seems to interfere with the fade-in transition, probably a browser issue with mixing inner-iframe effects with effects applied to the iframe parent/ancestors.
-        _pageTransitionHandler.transformContentImmediate_END(_$el, scale, left, top);
-    };
-
-    this.getCalculatedPageHeight = function () {
-        return _$el.height();
-    };
-
-    this.transformContent = _.bind(_.debounce(this.transformContentImmediate, 50), self);
-
-    function updateMetaSize() {
-
-        _meta_size.width = 0;
-        _meta_size.height = 0;
-
-        if (_enableBookStyleOverrides) return; // not fixed layout (reflowable in scroll view)
-
-        var size = undefined;
-
-        var isFallbackDimension = false;
-        var widthPercent = undefined;
-        var heightPercent = undefined;
-
-        var contentDocument = _$iframe[0].contentDocument;
-
-        // first try to read viewport size
-        var content = $('meta[name=viewport]', contentDocument).attr("content");
-
-        // if not found try viewbox (used for SVG)
-        if (!content) {
-            content = $('meta[name=viewbox]', contentDocument).attr("content");
-        }
-
-        if (content) {
-            size = parseMetaSize(content);
-        }
-
-        if (!size) {
-
-            //var $svg = $(contentDocument).find('svg');
-            // if($svg.length > 0) {
-            if (contentDocument && contentDocument.documentElement && contentDocument.documentElement.nodeName && contentDocument.documentElement.nodeName.toLowerCase() == "svg") {
-
-                var width = undefined;
-                var height = undefined;
-
-                var wAttr = contentDocument.documentElement.getAttribute("width");
-                var isWidthPercent = wAttr && wAttr.length >= 1 && wAttr[wAttr.length - 1] == '%';
-                if (wAttr) {
-                    try {
-                        width = parseInt(wAttr, 10);
+                    var enable3D = false;
+                    var settings = _viewSettings;
+                    if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
+                        //defaults
+                        settings = new ViewerSettings({});
                     }
-                    catch (err) {}
-                }
-                if (width && isWidthPercent) {
-                    widthPercent = width;
-                    width = undefined;
-                }
-
-                var hAttr = contentDocument.documentElement.getAttribute("height");
-                var isHeightPercent = hAttr && hAttr.length >= 1 && hAttr[hAttr.length - 1] == '%';
-                if (hAttr) {
-                    try {
-                        height = parseInt(hAttr, 10);
+                    if (settings.enableGPUHardwareAccelerationCSS3D) {
+                        enable3D = true;
+                        _$iframe.css("transform", "translateZ(0)");
                     }
-                    catch (err) {}
                 }
-                if (height && isHeightPercent) {
-                    heightPercent = height;
-                    height = undefined;
+                else {
+                    _$iframe.css({ left: "0px", top: "0px" });
+                }
+            };
+
+            this.hideIFrame = function () {
+
+                _$iframe.css("visibility", "hidden");
+
+                // With some books, despite the iframe and its containing div wrapper being hidden,
+                // the iframe's contentWindow / contentDocument is still visible!
+                // Thus why we translate the iframe out of view instead.
+
+                if (_useCSSTransformToHideIframe) {
+                    var enable3D = false;
+                    var settings = _viewSettings;
+                    if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
+                        //defaults
+                        settings = new ViewerSettings({});
+                    }
+                    if (settings.enableGPUHardwareAccelerationCSS3D) {
+                        enable3D = true;
+                    }
+
+                    var css = Helpers.CSSTransformString({ left: "10000", top: "10000", enable3D: enable3D });
+                    _$iframe.css(css);
+                }
+                else {
+                    _$iframe.css({ left: "10000px", top: "10000px" });
+                }
+            };
+
+            function getContentDocHeight() {
+
+                if (!_$iframe || !_$iframe.length) {
+                    return 0;
                 }
 
-                if (width && height) {
+                if (Helpers.isIframeAlive(_$iframe[0])) {
+                    var win = _$iframe[0].contentWindow;
+                    var doc = _$iframe[0].contentDocument;
+
+                    var height = Math.round(parseFloat(win.getComputedStyle(doc.documentElement).height)); //body can be shorter!
+                    return height;
+                }
+                else if (_$epubHtml) {
+                    console.error("getContentDocHeight ??");
+                    var jqueryHeight = _$epubHtml.height();
+                    return jqueryHeight;
+                }
+
+                return 0;
+            }
+
+            // dir: 0 => new or same page, 1 => previous, 2 => next
+            this.updatePageSwitchDir = function (dir, hasChanged) {
+                _pageTransitionHandler.updatePageSwitchDir(dir, hasChanged);
+            };
+
+
+            this.transformContentImmediate = function (scale, left, top) {
+
+                if (_enableBookStyleOverrides) return;  // not fixed layout (reflowable in scroll view)
+
+                var elWidth = Math.ceil(_meta_size.width * scale);
+                var elHeight = Math.floor(_meta_size.height * scale);
+
+                _pageTransitionHandler.transformContentImmediate_BEGIN(_$el, scale, left, top);
+
+                _$el.css("left", left + "px");
+                _$el.css("top", top + "px");
+                _$el.css("width", elWidth + "px");
+                _$el.css("height", elHeight + "px");
+
+                if (!_$epubHtml) {
+                    //                  debugger;
+                    return;
+                }
+
+                var enable3D = false;
+                var settings = _viewSettings;
+                if (!settings || typeof settings.enableGPUHardwareAccelerationCSS3D === "undefined") {
+                    //defaults
+                    settings = new ViewerSettings({});
+                }
+                if (settings.enableGPUHardwareAccelerationCSS3D) {
+                    enable3D = true;
+                }
+
+                if (_$epubBody // not SVG spine item (otherwise fails in Safari OSX)
+                    && reader.needsFixedLayoutScalerWorkAround()) {
+
+                    var css1 = Helpers.CSSTransformString({ scale: scale, enable3D: enable3D });
+
+                    // See https://github.com/readium/readium-shared-js/issues/285 
+                    css1["min-width"] = _meta_size.width;
+                    css1["min-height"] = _meta_size.height;
+
+                    _$epubHtml.css(css1);
+
+                    // Ensures content dimensions matches viewport meta (authors / production tools should do this in their CSS...but unfortunately some don't).
+                    if (_$epubBody && _$epubBody.length) {
+                        _$epubBody.css({ width: _meta_size.width, height: _meta_size.height });
+                    }
+
+                    var css2 = Helpers.CSSTransformString({ scale: 1, enable3D: enable3D });
+                    css2["width"] = _meta_size.width * scale;
+                    css2["height"] = _meta_size.height * scale;
+
+                    _$scaler.css(css2);
+                }
+                else {
+                    var css = Helpers.CSSTransformString({ scale: scale, enable3D: enable3D });
+                    css["width"] = _meta_size.width;
+                    css["height"] = _meta_size.height;
+                    _$scaler.css(css);
+                }
+
+                // Chrome workaround: otherwise text is sometimes invisible (probably a rendering glitch due to the 3D transform graphics backend?)
+                //_$epubHtml.css("visibility", "hidden"); // "flashing" in two-page spread mode is annoying :(
+                _$epubHtml.css("opacity", "0.999");
+
+                self.showIFrame();
+
+                setTimeout(function () {
+                    //_$epubHtml.css("visibility", "visible");
+                    _$epubHtml.css("opacity", "1");
+                }, 0);
+
+                // TODO: the CSS transitions do not work anymore, tested on Firefox and Chrome.
+                // The line of code below still needs to be invoked, but the logic in _pageTransitionHandler probably need adjusting to work around the animation timing issue.
+                // PS: opacity=1 above seems to interfere with the fade-in transition, probably a browser issue with mixing inner-iframe effects with effects applied to the iframe parent/ancestors.
+                _pageTransitionHandler.transformContentImmediate_END(_$el, scale, left, top);
+            };
+
+            this.getCalculatedPageHeight = function () {
+                return _$el.height();
+            };
+
+            this.transformContent = _.bind(_.debounce(this.transformContentImmediate, 50), self);
+
+            function updateMetaSize() {
+
+                _meta_size.width = 0;
+                _meta_size.height = 0;
+
+                if (_enableBookStyleOverrides) return; // not fixed layout (reflowable in scroll view)
+
+                var size = undefined;
+
+                var isFallbackDimension = false;
+                var widthPercent = undefined;
+                var heightPercent = undefined;
+
+                var contentDocument = _$iframe[0].contentDocument;
+
+                // first try to read viewport size
+                var content = $('meta[name=viewport]', contentDocument).attr("content");
+
+                // if not found try viewbox (used for SVG)
+                if (!content) {
+                    content = $('meta[name=viewbox]', contentDocument).attr("content");
+                }
+
+                if (content) {
+                    size = parseMetaSize(content);
+                }
+
+                if (!size) {
+
+                    //var $svg = $(contentDocument).find('svg');
+                    // if($svg.length > 0) {
+                    if (contentDocument && contentDocument.documentElement && contentDocument.documentElement.nodeName && contentDocument.documentElement.nodeName.toLowerCase() == "svg") {
+
+                        var width = undefined;
+                        var height = undefined;
+
+                        var wAttr = contentDocument.documentElement.getAttribute("width");
+                        var isWidthPercent = wAttr && wAttr.length >= 1 && wAttr[wAttr.length - 1] == '%';
+                        if (wAttr) {
+                            try {
+                                width = parseInt(wAttr, 10);
+                            }
+                            catch (err) { }
+                        }
+                        if (width && isWidthPercent) {
+                            widthPercent = width;
+                            width = undefined;
+                        }
+
+                        var hAttr = contentDocument.documentElement.getAttribute("height");
+                        var isHeightPercent = hAttr && hAttr.length >= 1 && hAttr[hAttr.length - 1] == '%';
+                        if (hAttr) {
+                            try {
+                                height = parseInt(hAttr, 10);
+                            }
+                            catch (err) { }
+                        }
+                        if (height && isHeightPercent) {
+                            heightPercent = height;
+                            height = undefined;
+                        }
+
+                        if (width && height) {
+                            size = {
+                                width: width,
+                                height: height
+                            }
+                        }
+                        else {
+                            /// DISABLED (not a satisfactory fallback)
+                            // content = $svg.attr('viewBox');
+                            // if(content) {
+                            //     size = parseViewBoxSize(content);
+                            // }
+                            //
+                            // if (size) {
+                            //     console.warn("Viewport SVG: using viewbox!");
+                            // }
+                        }
+                    }
+                }
+
+                if (!size && _currentSpineItem) {
+                    content = _currentSpineItem.getRenditionViewport();
+
+                    if (content) {
+                        size = parseMetaSize(content);
+                        if (size) {
+                            console.log("Viewport: using rendition:viewport dimensions");
+                        }
+                    }
+                }
+
+                if (!size) {
+                    // Image fallback (auto-generated HTML template when WebView / iFrame is fed with image media type)
+                    var $img = $(contentDocument).find('img');
+                    if ($img.length > 0) {
+                        size = {
+                            width: $img.width(),
+                            height: $img.height()
+                        };
+
+                        var isImage = _currentSpineItem && _currentSpineItem.media_type && _currentSpineItem.media_type.length && _currentSpineItem.media_type.indexOf("image/") == 0;
+                        if (!isImage) {
+                            console.warn("Viewport: using img dimensions!");
+                        }
+                    }
+                    else {
+                        $img = $(contentDocument).find('image');
+                        if ($img.length > 0) {
+                            var width = undefined;
+                            var height = undefined;
+
+                            var wAttr = $img[0].getAttribute("width");
+                            if (wAttr) {
+                                try {
+                                    width = parseInt(wAttr, 10);
+                                }
+                                catch (err) { }
+                            }
+                            var hAttr = $img[0].getAttribute("height");
+                            if (hAttr) {
+                                try {
+                                    height = parseInt(hAttr, 10);
+                                }
+                                catch (err) { }
+                            }
+
+
+                            if (width && height) {
+                                size = {
+                                    width: width,
+                                    height: height
+                                };
+
+                                isFallbackDimension = true;
+
+                                console.warn("Viewport: using image dimensions!");
+                            }
+                        }
+                    }
+                }
+
+                if (!size) {
+                    // Not a great fallback, as it has the aspect ratio of the full window, but it is better than no display at all.
+                    width = _$viewport.width();
+                    height = _$viewport.height();
+
+                    // hacky method to determine the actual available horizontal space (half the two-page spread is a reasonable approximation, this means that whatever the size of the other iframe / one_page_view, the aspect ratio of this one exactly corresponds to half the viewport rendering surface)
+                    var isTwoPageSyntheticSpread = $("iframe.iframe-fixed", _$viewport).length > 1;
+                    if (isTwoPageSyntheticSpread) width *= 0.5;
+
+                    // the original SVG width/height might have been specified as a percentage of the containing viewport
+                    if (widthPercent) {
+                        width *= (widthPercent / 100);
+                    }
+                    if (heightPercent) {
+                        height *= (heightPercent / 100);
+                    }
+
                     size = {
                         width: width,
                         height: height
-                    }
-                }
-                else {
-                    /// DISABLED (not a satisfactory fallback)
-                    // content = $svg.attr('viewBox');
-                    // if(content) {
-                    //     size = parseViewBoxSize(content);
-                    // }
-                    //
-                    // if (size) {
-                    //     console.warn("Viewport SVG: using viewbox!");
-                    // }
-                }
-            }
-        }
-
-        if (!size && _currentSpineItem) {
-            content = _currentSpineItem.getRenditionViewport();
-
-            if (content) {
-                size = parseMetaSize(content);
-                if (size) {
-                    console.log("Viewport: using rendition:viewport dimensions");
-                }
-            }
-        }
-
-        if (!size) {
-            // Image fallback (auto-generated HTML template when WebView / iFrame is fed with image media type)
-            var $img = $(contentDocument).find('img');
-            if ($img.length > 0) {
-                size = {
-                    width: $img.width(),
-                    height: $img.height()
-                };
-
-                var isImage = _currentSpineItem && _currentSpineItem.media_type && _currentSpineItem.media_type.length && _currentSpineItem.media_type.indexOf("image/") == 0;
-                if (!isImage) {
-                    console.warn("Viewport: using img dimensions!");
-                }
-            }
-            else {
-                $img = $(contentDocument).find('image');
-                if ($img.length > 0) {
-                    var width = undefined;
-                    var height = undefined;
-
-                    var wAttr = $img[0].getAttribute("width");
-                    if (wAttr) {
-                        try {
-                            width = parseInt(wAttr, 10);
-                        }
-                        catch (err) {}
-                    }
-                    var hAttr = $img[0].getAttribute("height");
-                    if (hAttr) {
-                        try {
-                            height = parseInt(hAttr, 10);
-                        }
-                        catch (err) {}
-                    }
-
-
-                    if (width && height) {
-                        size = {
-                            width: width,
-                            height: height
-                        };
-
-                        isFallbackDimension = true;
-
-                        console.warn("Viewport: using image dimensions!");
-                    }
-                }
-            }
-        }
-
-        if (!size) {
-            // Not a great fallback, as it has the aspect ratio of the full window, but it is better than no display at all.
-            width = _$viewport.width();
-            height = _$viewport.height();
-
-            // hacky method to determine the actual available horizontal space (half the two-page spread is a reasonable approximation, this means that whatever the size of the other iframe / one_page_view, the aspect ratio of this one exactly corresponds to half the viewport rendering surface)
-            var isTwoPageSyntheticSpread = $("iframe.iframe-fixed", _$viewport).length > 1;
-            if (isTwoPageSyntheticSpread) width *= 0.5;
-
-            // the original SVG width/height might have been specified as a percentage of the containing viewport
-            if (widthPercent) {
-                width *= (widthPercent / 100);
-            }
-            if (heightPercent) {
-                height *= (heightPercent / 100);
-            }
-
-            size = {
-                width: width,
-                height: height
-            };
-
-            isFallbackDimension = true;
-
-            console.warn("Viewport: using browser / e-reader viewport dimensions!");
-        }
-
-        if (size) {
-            _meta_size.width = size.width;
-            _meta_size.height = size.height;
-
-            // Not strictly necessary, let's preserve the percentage values
-            // if (isFallbackDimension && contentDocument && contentDocument.documentElement && contentDocument.documentElement.nodeName && contentDocument.documentElement.nodeName.toLowerCase() == "svg") {
-            //     contentDocument.documentElement.setAttribute("width", size.width + "px");
-            //     contentDocument.documentElement.setAttribute("height", size.height + "px");
-            // }
-        }
-    }
-
-    function onUnload (spineItem) {
-        if (spineItem) {
-            
-            Globals.logEvent("CONTENT_DOCUMENT_UNLOADED", "EMIT", "one_page_view.js [ " + spineItem.href + " ]");
-            self.emit(Globals.Events.CONTENT_DOCUMENT_UNLOADED, _$iframe, spineItem);
-        }
-    }
-
-    this.onUnload = function () {
-        onUnload(_currentSpineItem);
-    };
-
-    //expected callback signature: function(success, $iframe, spineItem, isNewlyLoaded, context)
-    this.loadSpineItem = function (spineItem, callback, context) {
-
-        if (_currentSpineItem != spineItem) {
-
-            var prevSpineItem = _currentSpineItem;
-            _currentSpineItem = spineItem;
-            var src = _spine.package.resolveRelativeUrl(spineItem.href);
-
-            // both fixed layout and reflowable documents need hiding due to flashing during layout/rendering
-            //hide iframe until content is scaled
-            self.hideIFrame();
-
-            onUnload(prevSpineItem);
-
-
-            Globals.logEvent("OnePageView.Events.SPINE_ITEM_OPEN_START", "EMIT", "one_page_view.js [ " + spineItem.href + " -- " + src + " ]");
-            self.emit(OnePageView.Events.SPINE_ITEM_OPEN_START, _$iframe, _currentSpineItem);
-            
-            _iframeLoader.loadIframe(_$iframe[0], src, function (success) {
-
-                if (success && callback) {
-                    var func = function () {
-                        callback(success, _$iframe, _currentSpineItem, true, context);
                     };
 
-                    if (Helpers.isIframeAlive(_$iframe[0])) {
-                        onIFrameLoad(success); // applies styles
+                    isFallbackDimension = true;
 
-                        func();
-                    }
-                    else {
-                        console.error("onIFrameLoad !! doc && win + TIMEOUT");
-                        console.debug(spineItem.href);
+                    console.warn("Viewport: using browser / e-reader viewport dimensions!");
+                }
 
-                        onIFrameLoad(success);
+                if (size) {
+                    _meta_size.width = size.width;
+                    _meta_size.height = size.height;
 
-                        setTimeout(func, 500);
-                    }
+                    // Not strictly necessary, let's preserve the percentage values
+                    // if (isFallbackDimension && contentDocument && contentDocument.documentElement && contentDocument.documentElement.nodeName && contentDocument.documentElement.nodeName.toLowerCase() == "svg") {
+                    //     contentDocument.documentElement.setAttribute("width", size.width + "px");
+                    //     contentDocument.documentElement.setAttribute("height", size.height + "px");
+                    // }
+                }
+            }
+
+            function onUnload(spineItem) {
+                if (spineItem) {
+
+                    Globals.logEvent("CONTENT_DOCUMENT_UNLOADED", "EMIT", "one_page_view.js [ " + spineItem.href + " ]");
+                    self.emit(Globals.Events.CONTENT_DOCUMENT_UNLOADED, _$iframe, spineItem);
+                }
+            }
+
+            this.onUnload = function () {
+                onUnload(_currentSpineItem);
+            };
+
+            //expected callback signature: function(success, $iframe, spineItem, isNewlyLoaded, context)
+            this.loadSpineItem = function (spineItem, callback, context) {
+
+                if (_currentSpineItem != spineItem) {
+
+                    var prevSpineItem = _currentSpineItem;
+                    _currentSpineItem = spineItem;
+                    var src = _spine.package.resolveRelativeUrl(spineItem.href);
+
+                    // both fixed layout and reflowable documents need hiding due to flashing during layout/rendering
+                    //hide iframe until content is scaled
+                    self.hideIFrame();
+
+                    onUnload(prevSpineItem);
+
+
+                    Globals.logEvent("OnePageView.Events.SPINE_ITEM_OPEN_START", "EMIT", "one_page_view.js [ " + spineItem.href + " -- " + src + " ]");
+                    self.emit(OnePageView.Events.SPINE_ITEM_OPEN_START, _$iframe, _currentSpineItem);
+
+                    _iframeLoader.loadIframe(_$iframe[0], src, function (success) {
+
+                        if (success && callback) {
+                            var func = function () {
+                                callback(success, _$iframe, _currentSpineItem, true, context);
+                            };
+
+                            if (Helpers.isIframeAlive(_$iframe[0])) {
+                                onIFrameLoad(success); // applies styles
+
+                                func();
+                            }
+                            else {
+                                console.error("onIFrameLoad !! doc && win + TIMEOUT");
+                                console.debug(spineItem.href);
+
+                                onIFrameLoad(success);
+
+                                setTimeout(func, 500);
+                            }
+                        }
+                        else {
+                            onIFrameLoad(success);
+                        }
+
+                    }, self, { spineItem: _currentSpineItem });
                 }
                 else {
-                    onIFrameLoad(success);
+                    if (callback) {
+                        callback(true, _$iframe, _currentSpineItem, false, context);
+                    }
+                }
+            };
+            //
+            // function parseViewBoxSize(viewBoxString) {
+            //
+            //     var parts = viewBoxString.split(' ');
+            //
+            //     if(parts.length < 4) {
+            //         console.warn(viewBoxString + " value is not valid viewBox size")
+            //         return undefined;
+            //     }
+            //
+            //     var width = parseInt(parts[2]);
+            //     var height = parseInt(parts[3]);
+            //
+            //     if(!isNaN(width) && !isNaN(height)) {
+            //         return { width: width, height: height} ;
+            //     }
+            //
+            //     return undefined;
+            // }
+
+            function parseMetaSize(content) {
+
+                var pairs = content.replace(/\s/g, '').split(",");
+
+                var dict = {};
+
+                for (var i = 0; i < pairs.length; i++) {
+                    var nameVal = pairs[i].split("=");
+                    if (nameVal.length == 2) {
+
+                        dict[nameVal[0]] = nameVal[1];
+                    }
                 }
 
-            }, self, {spineItem: _currentSpineItem});
-        }
-        else {
-            if (callback) {
-                callback(true, _$iframe, _currentSpineItem, false, context);
+                var width = Number.NaN;
+                var height = Number.NaN;
+
+                if (dict["width"]) {
+                    width = parseInt(dict["width"]);
+                }
+
+                if (dict["height"]) {
+                    height = parseInt(dict["height"]);
+                }
+
+                if (!isNaN(width) && !isNaN(height)) {
+                    return { width: width, height: height };
+                }
+
+                return undefined;
             }
-        }
-    };
-    //
-    // function parseViewBoxSize(viewBoxString) {
-    //
-    //     var parts = viewBoxString.split(' ');
-    //
-    //     if(parts.length < 4) {
-    //         console.warn(viewBoxString + " value is not valid viewBox size")
-    //         return undefined;
-    //     }
-    //
-    //     var width = parseInt(parts[2]);
-    //     var height = parseInt(parts[3]);
-    //
-    //     if(!isNaN(width) && !isNaN(height)) {
-    //         return { width: width, height: height} ;
-    //     }
-    //
-    //     return undefined;
-    // }
 
-    function parseMetaSize(content) {
-
-        var pairs = content.replace(/\s/g, '').split(",");
-
-        var dict = {};
-
-        for (var i = 0; i < pairs.length; i++) {
-            var nameVal = pairs[i].split("=");
-            if (nameVal.length == 2) {
-
-                dict[nameVal[0]] = nameVal[1];
+            function getVisibleContentOffsets() {
+                return {
+                    top: -_$el.parent().scrollTop(),
+                    left: 0
+                };
             }
-        }
 
-        var width = Number.NaN;
-        var height = Number.NaN;
+            function getFrameDimensions() {
+                if (reader.needsFixedLayoutScalerWorkAround()) {
+                    var parentEl = _$el.parent()[0];
+                    return {
+                        width: parentEl.clientWidth,
+                        height: parentEl.clientHeight
+                    };
+                }
+                return {
+                    width: _meta_size.width,
+                    height: _meta_size.height
+                };
+            }
 
-        if (dict["width"]) {
-            width = parseInt(dict["width"]);
-        }
-
-        if (dict["height"]) {
-            height = parseInt(dict["height"]);
-        }
-
-        if (!isNaN(width) && !isNaN(height)) {
-            return {width: width, height: height};
-        }
-
-        return undefined;
-    }
-
-    function getVisibleContentOffsets() {
-        return {
-            top: -_$el.parent().scrollTop(),
-            left: 0
-        };
-    }
-    
-    function getFrameDimensions() {
-        if (reader.needsFixedLayoutScalerWorkAround()) {
-            var parentEl = _$el.parent()[0];
-            return {
-                width: parentEl.clientWidth,
-                height: parentEl.clientHeight
+            this.getNavigator = function () {
+                return new CfiNavigationLogic({
+                    $iframe: _$iframe,
+                    frameDimensionsGetter: getFrameDimensions,
+                    visibleContentOffsetsGetter: getVisibleContentOffsets,
+                    classBlacklist: ["cfi-marker", "mo-cfi-highlight", "resize-sensor", "resize-sensor-expand", "resize-sensor-shrink", "resize-sensor-inner", "js-hypothesis-config", "js-hypothesis-embed"],
+                    elementBlacklist: ["hypothesis-adder"],
+                    idBlacklist: ["MathJax_Message", "MathJax_SVG_Hidden"]
+                });
             };
-        }
-        return {
-            width: _meta_size.width,
-            height: _meta_size.height
+
+            this.getElementByCfi = function (spineItemIdref, cfi, classBlacklist, elementBlacklist, idBlacklist) {
+
+                if (spineItemIdref != _currentSpineItem.idref) {
+                    console.error("spine item is not loaded");
+                    return undefined;
+                }
+
+                var navigation = self.getNavigator();
+                return navigation.getElementByCfi(cfi, classBlacklist, elementBlacklist, idBlacklist);
+            };
+
+            this.getElementById = function (spineItemIdref, id) {
+
+                if (spineItemIdref != _currentSpineItem.idref) {
+                    console.error("spine item is not loaded");
+                    return undefined;
+                }
+
+                var navigation = self.getNavigator();
+                return navigation.getElementById(id);
+            };
+
+            this.getElement = function (spineItemIdref, selector) {
+
+                if (spineItemIdref != _currentSpineItem.idref) {
+                    console.error("spine item is not loaded");
+                    return undefined;
+                }
+
+                var navigation = self.getNavigator();
+                return navigation.getElement(selector);
+            };
+
+            this.getFirstVisibleMediaOverlayElement = function () {
+                var navigation = self.getNavigator();
+                return navigation.getFirstVisibleMediaOverlayElement();
+            };
+
+            this.offset = function () {
+                if (_$iframe) {
+                    return _$iframe.offset();
+                }
+                return undefined;
+            };
+
+            this.getVisibleElementsWithFilter = function (filterFunction) {
+                var navigation = self.getNavigator();
+                var elements = navigation.getVisibleElementsWithFilter(null, filterFunction);
+                return elements;
+            };
+
+            this.getVisibleElements = function (selector) {
+
+                var navigation = self.getNavigator();
+                var elements = navigation.getAllVisibleElementsWithSelector(selector);
+                return elements;
+            };
+
+            this.getAllElementsWithFilter = function (filterFunction, outsideBody) {
+                var navigation = self.getNavigator();
+                var elements = navigation.getAllElementsWithFilter(filterFunction, outsideBody);
+                return elements;
+            };
+
+            this.getElements = function (spineItemIdref, selector) {
+
+                if (spineItemIdref != _currentSpineItem.idref) {
+                    console.error("spine item is not loaded");
+                    return undefined;
+                }
+
+                var navigation = self.getNavigator();
+
+                return navigation.getElements(selector);
+            };
+
+            this.getNodeRangeInfoFromCfi = function (spineIdRef, partialCfi) {
+                if (spineIdRef != _currentSpineItem.idref) {
+                    console.warn("spine item is not loaded");
+                    return undefined;
+                }
+                var navigation = self.getNavigator();
+
+                return navigation.getNodeRangeInfoFromCfi(partialCfi);
+            };
+
+            function createBookmarkFromCfi(cfi) {
+                if (!_currentSpineItem) {
+                    return null;
+                }
+
+                return new BookmarkData(_currentSpineItem.idref, cfi);
+            }
+
+            this.getLoadedContentFrames = function () {
+                return [{ spineItem: _currentSpineItem, $iframe: _$iframe }];
+            };
+
+            this.getFirstVisibleCfi = function (visibleContentOffsets, frameDimensions) {
+                return createBookmarkFromCfi(self.getNavigator().getFirstVisibleCfi(visibleContentOffsets, frameDimensions));
+            };
+
+            this.getLastVisibleCfi = function (visibleContentOffsets, frameDimensions) {
+                return createBookmarkFromCfi(self.getNavigator().getLastVisibleCfi(visibleContentOffsets, frameDimensions));
+            };
+
+            this.getDomRangeFromRangeCfi = function (rangeCfi, rangeCfi2, inclusive) {
+                return self.getNavigator().getDomRangeFromRangeCfi(rangeCfi, rangeCfi2, inclusive);
+            };
+
+            this.getRangeCfiFromDomRange = function (domRange) {
+                return createBookmarkFromCfi(self.getNavigator().getRangeCfiFromDomRange(domRange));
+            };
+
+            this.getVisibleCfiFromPoint = function (x, y, precisePoint) {
+                return createBookmarkFromCfi(self.getNavigator().getVisibleCfiFromPoint(x, y, precisePoint));
+            };
+
+            this.getRangeCfiFromPoints = function (startX, startY, endX, endY) {
+                return createBookmarkFromCfi(self.getNavigator().getRangeCfiFromPoints(startX, startY, endX, endY));
+            };
+
+            this.getCfiForElement = function (element) {
+                return createBookmarkFromCfi(self.getNavigator().getCfiForElement(element));
+            };
+
+            this.getElementFromPoint = function (x, y) {
+                return self.getNavigator().getElementFromPoint(x, y);
+            };
+
+            this.getStartCfi = function () {
+                return createBookmarkFromCfi(self.getNavigator().getStartCfi());
+            };
+
+            this.getEndCfi = function () {
+                return createBookmarkFromCfi(self.getNavigator().getEndCfi());
+            };
+
+            this.getNearestCfiFromElement = function (element) {
+                return createBookmarkFromCfi(self.getNavigator().getNearestCfiFromElement(element));
+            };
         };
-    }
-    
-    this.getNavigator = function () {
-        return new CfiNavigationLogic({
-            $iframe: _$iframe,
-            frameDimensionsGetter: getFrameDimensions,
-            visibleContentOffsetsGetter: getVisibleContentOffsets,
-            classBlacklist: ["cfi-marker", "mo-cfi-highlight", "resize-sensor", "resize-sensor-expand", "resize-sensor-shrink", "resize-sensor-inner", "js-hypothesis-config", "js-hypothesis-embed"],
-            elementBlacklist: ["hypothesis-adder"],
-            idBlacklist: ["MathJax_Message", "MathJax_SVG_Hidden"]
-        });
-    };
 
-    this.getElementByCfi = function (spineItemIdref, cfi, classBlacklist, elementBlacklist, idBlacklist) {
-
-        if (spineItemIdref != _currentSpineItem.idref) {
-            console.error("spine item is not loaded");
-            return undefined;
-        }
-
-        var navigation = self.getNavigator();
-        return navigation.getElementByCfi(cfi, classBlacklist, elementBlacklist, idBlacklist);
-    };
-
-    this.getElementById = function (spineItemIdref, id) {
-
-        if (spineItemIdref != _currentSpineItem.idref) {
-            console.error("spine item is not loaded");
-            return undefined;
-        }
-
-        var navigation = self.getNavigator();
-        return navigation.getElementById(id);
-    };
-
-    this.getElement = function (spineItemIdref, selector) {
-
-        if(spineItemIdref != _currentSpineItem.idref) {
-            console.error("spine item is not loaded");
-            return undefined;
-        }
-
-        var navigation = self.getNavigator();
-        return navigation.getElement(selector);
-    };
-
-    this.getFirstVisibleMediaOverlayElement = function() {
-        var navigation = self.getNavigator();
-        return navigation.getFirstVisibleMediaOverlayElement();
-    };
-
-    this.offset = function () {
-        if (_$iframe) {
-            return _$iframe.offset();
-        }
-        return undefined;
-    };
-
-    this.getVisibleElementsWithFilter = function (filterFunction) {
-        var navigation = self.getNavigator();
-        var elements = navigation.getVisibleElementsWithFilter(null, filterFunction);
-        return elements;
-    };
-
-    this.getVisibleElements = function (selector) {
-
-        var navigation = self.getNavigator();
-        var elements = navigation.getAllVisibleElementsWithSelector(selector);
-        return elements;
-    };
-
-    this.getAllElementsWithFilter = function (filterFunction, outsideBody) {
-        var navigation = self.getNavigator();
-        var elements = navigation.getAllElementsWithFilter(filterFunction, outsideBody);
-        return elements;
-    };
-
-    this.getElements = function(spineItemIdref, selector) {
-
-        if(spineItemIdref != _currentSpineItem.idref) {
-            console.error("spine item is not loaded");
-            return undefined;
-        }
-
-        var navigation = self.getNavigator();
-
-        return navigation.getElements(selector);
-    };
-
-    this.getNodeRangeInfoFromCfi = function (spineIdRef, partialCfi) {
-        if (spineIdRef != _currentSpineItem.idref) {
-            console.warn("spine item is not loaded");
-            return undefined;
-        }
-        var navigation = self.getNavigator();
-
-        return navigation.getNodeRangeInfoFromCfi(partialCfi);
-    };
-
-    function createBookmarkFromCfi(cfi) {
-        if (!_currentSpineItem) {
-            return null;
-        }
-
-        return new BookmarkData(_currentSpineItem.idref, cfi);
-    }
-
-    this.getLoadedContentFrames = function () {
-        return [{spineItem: _currentSpineItem, $iframe: _$iframe}];
-    };
-
-    this.getFirstVisibleCfi = function (visibleContentOffsets, frameDimensions) {
-        return createBookmarkFromCfi(self.getNavigator().getFirstVisibleCfi(visibleContentOffsets, frameDimensions));
-    };
-
-    this.getLastVisibleCfi = function (visibleContentOffsets, frameDimensions) {
-        return createBookmarkFromCfi(self.getNavigator().getLastVisibleCfi(visibleContentOffsets, frameDimensions));
-    };
-
-    this.getDomRangeFromRangeCfi = function (rangeCfi, rangeCfi2, inclusive) {
-        return self.getNavigator().getDomRangeFromRangeCfi(rangeCfi, rangeCfi2, inclusive);
-    };
-
-    this.getRangeCfiFromDomRange = function (domRange) {
-        return createBookmarkFromCfi(self.getNavigator().getRangeCfiFromDomRange(domRange));
-    };
-
-    this.getVisibleCfiFromPoint = function (x, y, precisePoint) {
-        return createBookmarkFromCfi(self.getNavigator().getVisibleCfiFromPoint(x, y, precisePoint));
-    };
-
-    this.getRangeCfiFromPoints = function(startX, startY, endX, endY) {
-        return createBookmarkFromCfi(self.getNavigator().getRangeCfiFromPoints(startX, startY, endX, endY));
-    };
-
-    this.getCfiForElement = function(element) {
-        return createBookmarkFromCfi(self.getNavigator().getCfiForElement(element));
-    };
-
-    this.getElementFromPoint = function (x, y) {
-        return self.getNavigator().getElementFromPoint(x, y);
-    };
-
-    this.getStartCfi = function () {
-        return createBookmarkFromCfi(self.getNavigator().getStartCfi());
-    };
-
-    this.getEndCfi = function () {
-        return createBookmarkFromCfi(self.getNavigator().getEndCfi());
-    };
-
-    this.getNearestCfiFromElement = function(element) {
-        return createBookmarkFromCfi(self.getNavigator().getNearestCfiFromElement(element));
-    };
-};
-
-OnePageView.Events = {
-    SPINE_ITEM_OPEN_START: "SpineItemOpenStart",
-    CONTENT_SIZE_CHANGED: "ContentSizeChanged"
-};
-return OnePageView;
-});
+        OnePageView.Events = {
+            SPINE_ITEM_OPEN_START: "SpineItemOpenStart",
+            CONTENT_SIZE_CHANGED: "ContentSizeChanged"
+        };
+        return OnePageView;
+    });
 
 //  Created by Boris Schneiderman.
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
@@ -53679,7 +53676,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"521b8e8f30af24e34cdb46fd6808c6cb46542942","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","tag":"0.31.0-alpha-0-g521b8e8","branch":"develop","release":false,"timestamp":1535512355715},"readiumJs":{"sha":"c26a9352839de4164766876681ae9415d432cecc","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-31-gc26a935","branch":"develop","release":false,"timestamp":1535512356052},"readiumSharedJs":{"sha":"7b99304a8883b541a5d43b3efa4157b3a1da4378","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-66-g7b99304","branch":"develop","release":false,"timestamp":1535512356429}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"521b8e8f30af24e34cdb46fd6808c6cb46542942","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","tag":"0.31.0-alpha-0-g521b8e8","branch":"develop","release":false,"timestamp":1535681006174},"readiumJs":{"sha":"c26a9352839de4164766876681ae9415d432cecc","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-31-gc26a935","branch":"develop","release":false,"timestamp":1535681006497},"readiumSharedJs":{"sha":"7b99304a8883b541a5d43b3efa4157b3a1da4378","clean":false,"version":"0.31.0-alpha","tag":"0.30.0-66-g7b99304","branch":"develop","release":false,"timestamp":1535681006807}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -67854,7 +67851,7 @@ define("hgn!readium_js_viewer_html_templates/about-dialog.html", ["hogan"], func
 define("hgn!readium_js_viewer_html_templates/reader-navbar.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"container-fluid\">\r");t.b("\n" + i);t.b("    <!-- Brand and toggle get grouped for better mobile display -->\r");t.b("\n" + i);t.b("    <div class=\"navbar-header\">\r");t.b("\n" + i);t.b("        <button type=\"button\" class=\"collapsed navbar-toggle\" data-toggle=\"collapse\" data-target=\"#bs-example-navbar-collapse-1\"\r");t.b("\n" + i);t.b("            aria-expanded=\"false\">\r");t.b("\n" + i);t.b("            <span class=\"sr-only\">Toggle navigation</span>\r");t.b("\n" + i);t.b("            <span class=\"icon-bar\"></span>\r");t.b("\n" + i);t.b("            <span class=\"icon-bar\"></span>\r");t.b("\n" + i);t.b("            <span class=\"icon-bar\"></span>\r");t.b("\n" + i);t.b("        </button>\r");t.b("\n" + i);t.b("        <a class=\"navbar-brand\" href=\"/\">\r");t.b("\n" + i);t.b("            <img src=\"https://getbootstrap.com/docs/4.1/assets/brand/bootstrap-solid.svg\" width=\"30\" height=\"30\" class=\"d-inline-block align-top\"\r");t.b("\n" + i);t.b("                alt=\"\"><strong> ReadiumJS</strong>\r");t.b("\n" + i);t.b("        </a>\r");t.b("\n" + i);t.b("    </div>\r");t.b("\n" + i);t.b("    <!-- Collect the nav links, forms, and other content for toggling -->\r");t.b("\n" + i);t.b("    <div class=\"collapse navbar-collapse\" id=\"bs-example-navbar-collapse-1\">\r");t.b("\n" + i);t.b("        <ul class=\"nav navbar-nav\">\r");t.b("\n" + i);t.b("            <button id=\"buttShowToolBar\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:1px;height=1px;\"\r");t.b("\n" + i);t.b("                tabindex=\"-1\" aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.ToolbarShow",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.ToolbarShow",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.ToolbarShow",c,p,0)));t.b("\"> </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            <button id=\"buttHideToolBar\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\"\r");t.b("\n" + i);t.b("                tabindex=\"-1\" aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.ToolbarHide",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.ToolbarHide",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.ToolbarHide",c,p,0)));t.b("\"> </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            <button id=\"buttNightTheme\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"\r");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.NightTheme",c,p,0)));t.b("\"> </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            <button id=\"buttRatePlus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"\r");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysRateIncrease",c,p,0)));t.b("\"> </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            <button id=\"buttRateMinus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"\r");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysRateDecrease",c,p,0)));t.b("\"> </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            <button id=\"buttVolumePlus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"\r");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysVolumeIncrease",c,p,0)));t.b("\"> </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            <button id=\"buttVolumeMinus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\"\r");t.b("\n" + i);t.b("                tabindex=\"-1\" aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysVolumeDecrease",c,p,0)));t.b("\"> </button>\r");t.b("\n" + i);t.b("        </ul>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("        <ul class=\"nav navbar-nav navbar-right\">\r");t.b("\n" + i);t.b("            <div id=\"backgroundAudioTrack-div\" style=\"margin-right: 4px\">\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"backgroundAudioTrack-button-play\" type=\"button\" class=\"btn navbar-btn icon-play-audio-background\"\r");t.b("\n" + i);t.b("                    title=\"");t.b(t.v(t.d("strings.i18n_audio_play_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_play_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.BackgroundAudioPlayPause",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-music\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"backgroundAudioTrack-button-pause\" type=\"button\" class=\"btn navbar-btn icon-pause-audio-background\"\r");t.b("\n" + i);t.b("                    title=\"");t.b(t.v(t.d("strings.i18n_audio_pause_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_pause_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-volume-up\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            </div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("            <!--Audioplayer Controls START-->\r");t.b("\n" + i);t.b("            <div id=\"audioplayer\" class=\"navbar-btn\" style=\"margin-right: 4px\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-collapse-audio\" type=\"button\" class=\"btn icon-collapse-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_collapse",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_collapse",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-open\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-expand-audio\" type=\"button\" class=\"btn icon-expand-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_expand",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_expand",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-save\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-previous-audio\" type=\"button\" class=\"btn icon-previous-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPrevious",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPrevious",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysPrevious",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-backward\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-play-audio\" type=\"button\" class=\"btn icon-play-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_play",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_play",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysPlayPause",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-play\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-pause-audio\" type=\"button\" class=\"btn icon-pause-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_pause",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_pause",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-pause\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-next-audio\" type=\"button\" class=\"btn icon-next-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysNext",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    arial-label=\"");t.b(t.v(t.d("strings.i18n_audio_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysNext",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysNext",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-forward\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                <div id=\"audioResponsive\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-audio-volume-mute\" type=\"button\" class=\"btn icon-audio-volume-mute\" title=\"");t.b(t.v(t.d("strings.i18n_audio_mute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_mute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                        <span class=\"glyphicon glyphicon-volume-up\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                    </button>\r");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-audio-volume-unmute\" type=\"button\" class=\"btn icon-audio-volume-unmute\" title=\"");t.b(t.v(t.d("strings.i18n_audio_unmute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_unmute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\">\r");t.b("\n" + i);t.b("                        <span class=\"glyphicon glyphicon-volume-off\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                    </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <input tabindex=\"1\" id=\"volume-range-slider\" type=\"range\" role=\"slider\" min=\"0\" aria-value-min=\"0\" aria-valuemin=\"0\" max=\"100\"\r");t.b("\n" + i);t.b("                        aria-value-max=\"100\" aria-valuemax=\"100\" value=\"100\" aria-valuenow=\"100\" aria-value-now=\"100\" aria-valuetext=\"100%\"\r");t.b("\n" + i);t.b("                        aria-value-text=\"100%\" title=\"");t.b(t.v(t.d("strings.i18n_audio_volume",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                        arial-label=\"");t.b(t.v(t.d("strings.i18n_audio_volume",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    />\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-touch-audio-enable\" type=\"button\" class=\"btn icon-touch-audio-enable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_touch_enable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_touch_enable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                        <span id=\"icon-touch-off-hand\" class=\"glyphicon glyphicon-hand-up\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <span id=\"icon-touch-off\" class=\"glyphicon glyphicon-remove\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                    </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-touch-audio-disable\" type=\"button\" class=\"btn icon-touch-audio-disable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_touch_disable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_touch_disable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                        <span id=\"icon-touch-on-hand\" class=\"glyphicon glyphicon-hand-up\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <span id=\"icon-touch-on\" class=\"glyphicon glyphicon-ok\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                    </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                </div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                <div id=\"audioExpanded\" role=\"alert\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <input tabindex=\"1\" id=\"time-range-slider\" type=\"range\" role=\"slider\" min=\"0\" aria-value-min=\"0\" aria-valuemin=\"0\" max=\"100\"\r");t.b("\n" + i);t.b("                        aria-value-max=\"100\" aria-valuemax=\"100\" value=\"0\" aria-valuenow=\"0\" aria-value-now=\"0\" aria-valuetext=\"0%\"\r");t.b("\n" + i);t.b("                        aria-value-text=\"0%\" data-value=\"0\" title=\"");t.b(t.v(t.d("strings.i18n_audio_time",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_time",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                    />\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-audio-rate\" type=\"button\" class=\"btn icon-rate-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_rate_reset",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateReset",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_rate_reset",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateReset",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysRateReset",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                        <span class=\"glyphicon glyphicon-play-circle\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                    </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <input tabindex=\"1\" id=\"rate-range-slider\" type=\"range\" role=\"slider\" min=\"0\" aria-value-min=\"0\" aria-valuemin=\"0\" max=\"4\"\r");t.b("\n" + i);t.b("                        aria-value-max=\"4\" aria-valuemax=\"4\" value=\"1\" aria-valuenow=\"1\" aria-value-now=\"1\" aria-valuetext=\"1x\"\r");t.b("\n" + i);t.b("                        aria-value-text=\"1x\" step=\"0.1\" title=\"");t.b(t.v(t.d("strings.i18n_audio_rate",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_rate",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                    />\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <span aria-hidden=\"true\" tabindex=\"-1\" id=\"rate-range-slider-label\">1x</span>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <form action=\"\" id=\"mo-sync-form\">\r");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"default\" id=\"mo-sync-default\" class=\"mo-sync\" checked=\"checked\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_default",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_default",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>\r");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-default\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_default",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span\r");t.b("\n" + i);t.b("                                aria-hidden=\"true\">&#8855;</span></label>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"word\" id=\"mo-sync-word\" class=\"mo-sync\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>\r");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-word\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span\r");t.b("\n" + i);t.b("                                aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b("</span></label>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"sentence\" id=\"mo-sync-sentence\" class=\"mo-sync\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>\r");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-sentence\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span\r");t.b("\n" + i);t.b("                                aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b("</span></label>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"paragraph\" id=\"mo-sync-paragraph\" class=\"mo-sync\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>\r");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-paragraph\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span\r");t.b("\n" + i);t.b("                                aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b("</span></label>\r");t.b("\n" + i);t.b("                    </form>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <div id=\"audio-block\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <div id=\"mo-highlighters\">\r");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-0\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": ");t.b(t.v(t.d("strings.i18n_audio_highlight_default",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": ");t.b(t.v(t.d("strings.i18n_audio_highlight_default",c,p,0)));t.b("\" aria-selected=\"true\"\r");t.b("\n" + i);t.b("                                data-mohighlight=\"0\">\r");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_audio_highlight_default",c,p,0)));t.b("\r");t.b("\n" + i);t.b("                            </button>\r");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-1\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #1\"\r");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #1\" data-mohighlight=\"1\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                            </button>\r");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-2\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #2\"\r");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #2\" data-mohighlight=\"2\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                            </button>\r");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-3\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #3\"\r");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #3\" data-mohighlight=\"3\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                            </button>\r");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-4\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #4\"\r");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #4\" data-mohighlight=\"4\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                            </button>\r");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-5\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #5\"\r");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #5\" data-mohighlight=\"5\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                            </button>\r");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-6\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #6\"\r");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #6\" data-mohighlight=\"6\">\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                            </button>\r");t.b("\n" + i);t.b("                        </div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-playback-scroll-enable\" type=\"button\" class=\"btn icon-playback-scroll-enable\" title=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_enable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_enable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                            <span id=\"icon-playback-scroll-off\" class=\"glyphicon glyphicon-sort-by-attributes\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                        </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-playback-scroll-disable\" type=\"button\" class=\"btn icon-playback-scroll-disable\" title=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_disable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_disable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                            <span id=\"icon-playback-scroll-on\" class=\"glyphicon glyphicon-sort\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                        </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-auto-page-turn-enable\" type=\"button\" class=\"btn icon-auto-page-turn-enable\" title=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_enable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_enable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                            <span id=\"icon-auto-page-turn-off\" class=\"glyphicon glyphicon-sound-stereo\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                        </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-auto-page-turn-disable\" type=\"button\" class=\"btn icon-auto-page-turn-disable\" title=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_disable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_disable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                            <span id=\"icon-auto-page-turn-on\" class=\"glyphicon glyphicon-sound-dolby\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                        </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-skip-audio-enable\" type=\"button\" class=\"btn icon-skip-audio-enable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_skip_enable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_skip_enable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                            <span id=\"icon-skip-off\" class=\"glyphicon glyphicon-remove-circle\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                        </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-skip-audio-disable\" type=\"button\" class=\"btn icon-skip-audio-disable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_skip_disable",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_skip_disable",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                            <span id=\"icon-skip-on\" class=\"glyphicon glyphicon-ok-circle\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                        </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-esc-audio\" type=\"button\" class=\"btn icon-esc-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_esc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysEscape",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_esc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysEscape",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysEscape",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                            <span class=\"glyphicon glyphicon-eject\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("                        </button>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    </div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("                    <!-- div class=\"checkbox\">\r");t.b("\n" + i);t.b("                      <label>\r");t.b("\n" + i);t.b("                        <input type=\"checkbox\" value=\"false\"> Skip\r");t.b("\n" + i);t.b("                      </label>\r");t.b("\n" + i);t.b("                    </div -->\r");t.b("\n" + i);t.b("                </div>\r");t.b("\n" + i);t.b("            </div>\r");t.b("\n" + i);t.b("            <!--Audioplayer Controls END-->\r");t.b("\n" + i);t.b("            <div class=\"zoom-wrapper dropdown\" style=\"display:none\">\r");t.b("\n" + i);t.b("                <a tabindex=\"1\" href=\"#\" data-toggle=\"dropdown\"><input tabindex=\"1\" type=\"text\" value=\"100%\" disabled/><span\r");t.b("\n" + i);t.b("                        class=\"caret\"></span></a>\r");t.b("\n" + i);t.b("                <ul id=\"zoom-menu\" class=\"dropdown-menu\" role=\"menu\">\r");t.b("\n" + i);t.b("                    <li id=\"zoom-custom\"><a href=\"#\" tabindex=\"1\">Custom <span class=\"glyphicon glyphicon-ok\"></span></a></li>\r");t.b("\n" + i);t.b("                    <li id=\"zoom-fit-width\"><a href=\"#\" tabindex=\"1\">Fit Width <span class=\"glyphicon glyphicon-ok\"></span></a></li>\r");t.b("\n" + i);t.b("                    <li id=\"zoom-fit-screen\" class=\"active-zoom\"><a href=\"#\" tabindex=\"1\">Fit Screen <span class=\"glyphicon glyphicon-ok\"></span></a></li>\r");t.b("\n" + i);t.b("                </ul>\r");t.b("\n" + i);t.b("            </div>\r");t.b("\n" + i);t.b("            <button tabindex=\"1\" type=\"button\" class=\"btn navbar-btn icon-annotations\" title=\"");t.b(t.v(t.d("strings.highlight_selection",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.highlight_selection",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-edit\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("            </button>\r");t.b("\n" + i);t.b("            <button id=\"tocButt\" tabindex=\"1\" type=\"button\" class=\"btn navbar-btn icon-toc\" title=\"");t.b(t.v(t.d("strings.toc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.TocShowHideToggle",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                aria-label=\"");t.b(t.v(t.d("strings.toc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.TocShowHideToggle",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.TocShowHideToggle",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-list\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("            </button>\r");t.b("\n" + i);t.b("            <button id=\"settbutt1\" tabindex=\"1\" type=\"button\" class=\"btn navbar-btn icon-settings\" data-toggle=\"modal\" data-target=\"#settings-dialog\"\r");t.b("\n" + i);t.b("                title=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.ShowSettingsModal",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.ShowSettingsModal",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.ShowSettingsModal",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-cog\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("            </button>\r");t.b("\n" + i);t.b("            <button tabindex=\"1\" id=\"buttFullScreenToggle\" type=\"button\" class=\"btn navbar-btn icon-full-screen\" title=\"");t.b(t.v(t.d("strings.enter_fullscreen",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.FullScreenToggle",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("                aria-label=\"");t.b(t.v(t.d("strings.enter_fullscreen",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.FullScreenToggle",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.FullScreenToggle",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-resize-full\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("            </button>\r");t.b("\n" + i);t.b("        </ul>\r");t.b("\n" + i);t.b("    </div><!-- /.navbar-collapse -->\r");t.b("\n" + i);t.b("</div><!-- /.container-fluid -->");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
 
 
-define("hgn!readium_js_viewer_html_templates/reader-body.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div id=\"readium-toc-body\"\r");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.toc",c,p,0)));t.b("\"\r");t.b("\n" + i);t.b("role=\"navigation\"\r");t.b("\n" + i);t.b(">\r");t.b("\n" + i);t.b("</div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("<div id=\"reading-area\" role=\"main\">  \r");t.b("\n" + i);t.b("  <div id=\"epub-reader-container\">\r");t.b("\n" + i);t.b("    <div id=\"epub-reader-frame\">\r");t.b("\n" + i);t.b("    </div>\r");t.b("\n" + i);t.b("  </div>\r");t.b("\n" + i);t.b("  \r");t.b("\n" + i);t.b("  <div id=\"readium-page-btns\" role=\"region\" aria-label=\"");t.b(t.v(t.d("strings.i18n_page_navigation",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("  <!-- page left/right buttons inserted here when EPUB is loaded (page progression direction) -->\r");t.b("\n" + i);t.b("  </div>\r");t.b("\n" + i);t.b("  \r");t.b("\n" + i);t.b("</div>");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+define("hgn!readium_js_viewer_html_templates/reader-body.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div id=\"readium-toc-body\" aria-label=\"");t.b(t.v(t.d("strings.toc",c,p,0)));t.b("\" role=\"navigation\">\r");t.b("\n" + i);t.b("</div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("<div id=\"reading-area\" role=\"main\">\r");t.b("\n" + i);t.b("  <div id=\"epub-reader-container\">\r");t.b("\n" + i);t.b("    <div id=\"epub-reader-frame\">\r");t.b("\n" + i);t.b("    </div>\r");t.b("\n" + i);t.b("  </div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("  <div id=\"readium-page-btns\" role=\"region\" aria-label=\"");t.b(t.v(t.d("strings.i18n_page_navigation",c,p,0)));t.b("\">\r");t.b("\n" + i);t.b("    <!-- page left/right buttons inserted here when EPUB is loaded (page progression direction) -->\r");t.b("\n" + i);t.b("  </div>\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("</div>");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
 
 
 define("hgn!readium_js_viewer_html_templates/reader-body-page-btns.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<!-- Left page -->\r");t.b("\n" + i);t.b("<button tabindex=\"0\" id=\"left-page-btn\" class=\"page-switch-overlay-icon\" type=\"button\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);if(t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,0,144,402,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PagePreviousAlt",c,p,0)));t.b("\"\r");t.b("\n" + i);});c.pop();}t.b("\r");t.b("\n" + i);if(!t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,1,0,0,"")){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PagePreviousAlt",c,p,0)));t.b("\"\r");t.b("\n" + i);};t.b("\r");t.b("\n" + i);t.b(">\r");t.b("\n" + i);t.b("<!-- img aria-hidden=\"true\" src=\"images/pagination1.svg\" -->\r");t.b("\n" + i);t.b("<span class=\"glyphicon glyphicon-chevron-left\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("</button>\r");t.b("\n" + i);t.b("  \r");t.b("\n" + i);t.b("<!-- Right page -->\r");t.b("\n" + i);t.b("<button tabindex=\"0\" id=\"right-page-btn\" class=\"page-switch-overlay-icon\" type=\"button\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);if(t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,0,1079,1325,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PageNextAlt",c,p,0)));t.b("\"\r");t.b("\n" + i);});c.pop();}t.b("\r");t.b("\n" + i);if(!t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,1,0,0,"")){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"\r");t.b("\n" + i);t.b("\r");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PageNextAlt",c,p,0)));t.b("\"\r");t.b("\n" + i);};t.b("\r");t.b("\n" + i);t.b(">\r");t.b("\n" + i);t.b("<!-- img aria-hidden=\"true\" src=\"images/pagination1.svg\" -->\r");t.b("\n" + i);t.b("<span class=\"glyphicon glyphicon-chevron-right\" aria-hidden=\"true\"></span>\r");t.b("\n" + i);t.b("</button>\r");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
@@ -71935,8 +71932,7 @@ define('readium_js_viewer/EpubReader',[
     './versioning/ReadiumVersioning',
     'readium_js/Readium',
     'readium_shared_js/helpers',
-    'readium_shared_js/models/bookmark_data',
-    'readium_shared_js/models/spine_item'],
+    'readium_shared_js/models/bookmark_data'],
 
     function (
         globalSetup,
@@ -72310,7 +72306,6 @@ define('readium_js_viewer/EpubReader',[
 
             readium.reader.on(ReadiumSDK.Events.CONTENT_DOCUMENT_LOADED, function ($iframe, spineItem) {
                 Globals.logEvent("CONTENT_DOCUMENT_LOADED", "ON", "EpubReader.js [ " + spineItem.href + " ]");
-
                 if (!load_ads) {
                     //Add ads
                     var read = readium.reader.spine().items;
@@ -72319,11 +72314,11 @@ define('readium_js_viewer/EpubReader',[
                     read[read.length - 1].index = len;
                     read[read.length - 1].linear = 'yes';
                     read[read.length - 1].href = HTTPServerRootFolder + '/ads.xhtml'
-                    //read[read.length - 1].href = 'http://lcp.trunguit.net/ads.xhtml'
                     read[read.length - 1].idref = 'ads_5213';
-                    read.push($.extend({}, read[read.length - 1]));
-                    read[read.length - 1].index = len + 1;
-                    read[read.length - 1].idref = 'review_5213';
+                    // read.push($.extend({}, read[read.length - 1]));
+                    // read[read.length - 1].href = HTTPServerRootFolder + '/end.xhtml'
+                    // read[read.length - 1].index = len + 1;
+                    // read[read.length - 1].idref = 'review_5213';
                     load_ads = true;
                 }
 
@@ -72635,11 +72630,12 @@ define('readium_js_viewer/EpubReader',[
         // See onSwipeLeft() onSwipeRight() in gesturesHandler.
         // See nextPage() prevPage() in this class.
         var updateUI = function (pageChangeData) {
-            if (pageChangeData.paginationInfo.canGoLeft())
+            var idref = readium.reader.getPaginationInfo().openPages[0].idref;
+            if (pageChangeData.paginationInfo.canGoLeft() || idref == 'ads_5213')
                 $("#left-page-btn").show();
             else
                 $("#left-page-btn").hide();
-            if (pageChangeData.paginationInfo.canGoRight())
+            if (pageChangeData.paginationInfo.canGoRight() || idref == 'ads_5213')
                 $("#right-page-btn").show();
             else
                 $("#right-page-btn").hide();
@@ -73337,7 +73333,6 @@ define('readium_js_viewer/EpubReader',[
 
                     // Debug check:
                     //console.debug(JSON.stringify(window.navigator.epubReadingSystem, undefined, 2));
-
 
                     loadEbook(readerSettings, openPageRequest);
                 });
