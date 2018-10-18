@@ -38759,9 +38759,8 @@ var OnePageView = function (options, classes, enableBookStyleOverrides, reader) 
     this.decorateIframe = function () {
         if (!_$iframe || !_$iframe.length) return;
 
-        //Border dash in continue reading
-        // _$iframe.css("border-bottom", "1px dashed silver");
-        // _$iframe.css("border-top", "1px dashed silver");
+        _$iframe.css("border-bottom", "1px dashed silver");
+        _$iframe.css("border-top", "1px dashed silver");
     };
 
     this.remove = function () {
@@ -53068,7 +53067,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"0f0bdbf9489ac1237916b757c86d2d9c395016d9","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1538629073277},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"develop","release":false,"timestamp":1538629073444},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"develop","release":false,"timestamp":1538629073571}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"ded71bca3e46f35b41eed765ca136a2d7a9ba653","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1539851360803},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","release":false,"timestamp":1539851360896},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"28620de318d0da4afed547002fd5ad2ed004a5c1","release":false,"timestamp":1539851360986}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -59263,8 +59262,7 @@ define('readium_js/epub-model/package_document_parser',['jquery', 'underscore', 
             metadata.rendition_flow = getMetaElemPropertyText(metadataElem, "rendition:flow");
 
 
-
-
+            metadata.rendition_layout = "reflowable";
 
 
             //http://www.idpf.org/epub/301/spec/epub-publications.html#fxl-property-viewport
@@ -73415,7 +73413,6 @@ define('readium_js_viewer/EpubReader',[
                 ebookURL,
 
                 function (packageDocument, options) {
-
                     if (!packageDocument) {
 
                         console.error("ERROR OPENING EBOOK: " + ebookURL_filepath);
@@ -73450,9 +73447,9 @@ define('readium_js_viewer/EpubReader',[
                         strings: Strings, dialogs: Dialogs, keyboard: Keyboard,
                         pageProgressionDirectionIsRTL: rtl
                     }));
-                    // if (rtl) {
-                    //     readium.reader.setBookStyles([{ selector: ':not(a):not(hypothesis-highlight)', declarations: { 'direction': 'rtl' } }])
-                    // }
+                    if (rtl) {
+                        readium.reader.setBookStyles([{ selector: ':not(a):not(hypothesis-highlight)', declarations: { 'direction': 'rtl' } }])
+                    }
                     $("#left-page-btn").on("click", prevPage);
                     $("#right-page-btn").on("click", nextPage);
                     $("#left-page-btn").mouseleave(function () {
