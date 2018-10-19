@@ -53067,7 +53067,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"ded71bca3e46f35b41eed765ca136a2d7a9ba653","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1539851360803},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","release":false,"timestamp":1539851360896},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"28620de318d0da4afed547002fd5ad2ed004a5c1","release":false,"timestamp":1539851360986}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"ded71bca3e46f35b41eed765ca136a2d7a9ba653","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1539915128423},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","release":false,"timestamp":1539915128514},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"28620de318d0da4afed547002fd5ad2ed004a5c1","release":false,"timestamp":1539915128632}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -71499,6 +71499,7 @@ define('readium_js_viewer/EpubReader',[
                     if (rtl) {
                         readium.reader.setBookStyles([{ selector: ':not(a):not(hypothesis-highlight)', declarations: { 'direction': 'rtl' } }])
                     }
+
                     $("#left-page-btn").on("click", prevPage);
                     $("#right-page-btn").on("click", nextPage);
                     $("#left-page-btn").mouseleave(function () {
@@ -71690,6 +71691,15 @@ define('readium_js_viewer/EpubReader',[
             readium.reader.on(ReadiumSDK.Events.CONTENT_DOCUMENT_LOAD_START, function ($iframe, spineItem) {
                 Globals.logEvent("CONTENT_DOCUMENT_LOAD_START", "ON", "EpubReader.js [ " + spineItem.href + " ]");
                 savePlace();
+                setScaleDisplay();
+                var read_type = readium.reader.getCurrentViewType();
+                //One page view
+                if(read_type == 4){
+                    readium.reader.setBookStyles([{ selector: 'body * img', declarations: { 'width': '100%', 'height':'89%'} }])
+                }else if(read_type == 1){
+                    // 2 page horizontal view
+                    readium.reader.setBookStyles([{ selector: 'body * img', declarations: { 'width': 'auto', 'height':'95vh'} }])
+                }
             });
 
 
