@@ -53067,7 +53067,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"ded71bca3e46f35b41eed765ca136a2d7a9ba653","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1539915128423},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","release":false,"timestamp":1539915128514},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"28620de318d0da4afed547002fd5ad2ed004a5c1","release":false,"timestamp":1539915128632}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"ded71bca3e46f35b41eed765ca136a2d7a9ba653","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1539937735760},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","release":false,"timestamp":1539937735860},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"28620de318d0da4afed547002fd5ad2ed004a5c1","release":false,"timestamp":1539937735953}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -59262,6 +59262,7 @@ define('readium_js/epub-model/package_document_parser',['jquery', 'underscore', 
             metadata.rendition_flow = getMetaElemPropertyText(metadataElem, "rendition:flow");
 
 
+            // Force using reflowable layout
             metadata.rendition_layout = "reflowable";
 
 
@@ -73649,7 +73650,7 @@ define('readium_js_viewer/EpubReader',[
                     readium.reader.setBookStyles([{ selector: 'body * img', declarations: { 'width': '100%', 'height':'89%'} }])
                 }else if(read_type == 1){
                     // 2 page horizontal view
-                    readium.reader.setBookStyles([{ selector: 'body * img', declarations: { 'width': 'auto', 'height':'95vh'} }])
+                    readium.reader.setBookStyles([{ selector: 'body * img', declarations: { 'width': 'auto', 'height':'95vh', 'display':'block', 'margin':'0 auto'} }])
                 }
             });
 
