@@ -172,11 +172,12 @@ function mapArray(input){
 
 function Parse_Feed_JSON(data) {
     data.publications.forEach(publication => {
+        console.log(publication);
         var title = publication.metadata.title;
         if(typeof(title) == "object"){
             title = mapArray(title)[0];
         }
-        var author = publication.metadata.author ? publication.metadata.author[0].name : "Author not spectified";
+        var author = publication.metadata.author ? (Array.isArray(publication.metadata.author) ? publication.metadata.author[0].name : publication.metadata.author.name) : "Author not spectified";
         if(typeof(author) == 'object'){
             author = mapArray(author)[0];
         }

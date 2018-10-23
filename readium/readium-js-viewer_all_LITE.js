@@ -37593,7 +37593,7 @@ var CfiNavigationLogic = function (options) {
                     if (color === true) {
                         color = 'red';
                     }
-                    overlayDiv.style.border = '1px dashed ' + color;
+                    // overlayDiv.style.border = '1px dashed ' + color;
                     overlayDiv.style.background = 'yellow';
                 }
 
@@ -38759,7 +38759,6 @@ var OnePageView = function (options, classes, enableBookStyleOverrides, reader) 
     this.decorateIframe = function () {
         if (!_$iframe || !_$iframe.length) return;
 
-        //Border dash in continue reading
         // _$iframe.css("border-bottom", "1px dashed silver");
         // _$iframe.css("border-top", "1px dashed silver");
     };
@@ -38988,11 +38987,10 @@ var OnePageView = function (options, classes, enableBookStyleOverrides, reader) 
     };
 
     function getContentDocHeight() {
-
         if (!_$iframe || !_$iframe.length) {
             return 0;
         }
-
+        console.log($(doc).height());
         if (Helpers.isIframeAlive(_$iframe[0])) {
             var win = _$iframe[0].contentWindow;
             var doc = _$iframe[0].contentDocument;
@@ -53068,7 +53066,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"0f0bdbf9489ac1237916b757c86d2d9c395016d9","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1538629073277},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"develop","release":false,"timestamp":1538629073444},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"develop","release":false,"timestamp":1538629073571}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"0f0bdbf9489ac1237916b757c86d2d9c395016d9","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1538626372447},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"develop","release":false,"timestamp":1538626372684},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"develop","release":false,"timestamp":1538626372999}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
