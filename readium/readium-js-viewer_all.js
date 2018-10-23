@@ -433,7 +433,7 @@ var requirejs, require, define;
     };
 }());
 
-define("readium-js-viewer_all_LITE", function(){});
+define("readium-js-viewer_all", function(){});
 
 /*!
  * jQuery JavaScript Library v2.2.4
@@ -37593,7 +37593,7 @@ var CfiNavigationLogic = function (options) {
                     if (color === true) {
                         color = 'red';
                     }
-                    // overlayDiv.style.border = '1px dashed ' + color;
+                    overlayDiv.style.border = '1px dashed ' + color;
                     overlayDiv.style.background = 'yellow';
                 }
 
@@ -38759,8 +38759,8 @@ var OnePageView = function (options, classes, enableBookStyleOverrides, reader) 
     this.decorateIframe = function () {
         if (!_$iframe || !_$iframe.length) return;
 
-        // _$iframe.css("border-bottom", "1px dashed silver");
-        // _$iframe.css("border-top", "1px dashed silver");
+        _$iframe.css("border-bottom", "1px dashed silver");
+        _$iframe.css("border-top", "1px dashed silver");
     };
 
     this.remove = function () {
@@ -38987,10 +38987,11 @@ var OnePageView = function (options, classes, enableBookStyleOverrides, reader) 
     };
 
     function getContentDocHeight() {
+
         if (!_$iframe || !_$iframe.length) {
             return 0;
         }
-        console.log($(doc).height());
+
         if (Helpers.isIframeAlive(_$iframe[0])) {
             var win = _$iframe[0].contentWindow;
             var doc = _$iframe[0].contentDocument;
@@ -53066,7 +53067,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"0f0bdbf9489ac1237916b757c86d2d9c395016d9","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1538626372447},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"develop","release":false,"timestamp":1538626372684},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"develop","release":false,"timestamp":1538626372999}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"ded71bca3e46f35b41eed765ca136a2d7a9ba653","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1539937735760},"readiumJs":{"sha":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-gf45e569","branch":"f45e5693bc565e8bd3df2b904f4eca3160949dc5","release":false,"timestamp":1539937735860},"readiumSharedJs":{"sha":"28620de318d0da4afed547002fd5ad2ed004a5c1","clean":false,"version":"0.32.0-alpha","tag":"0.31.1-2-g28620de","branch":"28620de318d0da4afed547002fd5ad2ed004a5c1","release":false,"timestamp":1539937735953}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -64082,405 +64083,33 @@ define("bootstrapA11y", ["bootstrap"], (function (global) {
     };
 }(this)));
 
-/**
- * Copyright (c) 2011-2014 Felix Gnass
- * Licensed under the MIT license
- * http://spin.js.org/
- *
- * Example:
-    var opts = {
-      lines: 12             // The number of lines to draw
-    , length: 7             // The length of each line
-    , width: 5              // The line thickness
-    , radius: 10            // The radius of the inner circle
-    , scale: 1.0            // Scales overall size of the spinner
-    , corners: 1            // Roundness (0..1)
-    , color: '#000'         // #rgb or #rrggbb
-    , opacity: 1/4          // Opacity of the lines
-    , rotate: 0             // Rotation offset
-    , direction: 1          // 1: clockwise, -1: counterclockwise
-    , speed: 1              // Rounds per second
-    , trail: 100            // Afterglow percentage
-    , fps: 20               // Frames per second when using setTimeout()
-    , zIndex: 2e9           // Use a high z-index by default
-    , className: 'spinner'  // CSS class to assign to the element
-    , top: '50%'            // center vertically
-    , left: '50%'           // center horizontally
-    , shadow: false         // Whether to render a shadow
-    , hwaccel: false        // Whether to use hardware acceleration (might be buggy)
-    , position: 'absolute'  // Element positioning
-    }
-    var target = document.getElementById('foo')
-    var spinner = new Spinner(opts).spin(target)
- */
-;(function (root, factory) {
+define('StorageManager',[], function(){
 
-  /* CommonJS */
-  if (typeof module == 'object' && module.exports) module.exports = factory()
+    var StaticStorageManager = {
 
-  /* AMD module */
-  else if (typeof define == 'function' && define.amd) define('spin',factory)
+        saveFile : function(path, blob, success, error){
+            success()
+        },
 
-  /* Browser global */
-  else root.Spinner = factory()
-}(this, function () {
-  "use strict"
+        deleteFile : function(path, success, error){
+            success();
 
-  var prefixes = ['webkit', 'Moz', 'ms', 'O'] /* Vendor prefixes */
-    , animations = {} /* Animation rules keyed by their name */
-    , useCssAnimations /* Whether to use CSS animations or setTimeout */
-    , sheet /* A stylesheet to hold the @keyframe or VML rules. */
+        },
 
-  /**
-   * Utility function to create elements. If no tag name is given,
-   * a DIV is created. Optionally properties can be passed.
-   */
-  function createEl (tag, prop) {
-    var el = document.createElement(tag || 'div')
-      , n
-
-    for (n in prop) el[n] = prop[n]
-    return el
-  }
-
-  /**
-   * Appends children and returns the parent.
-   */
-  function ins (parent /* child1, child2, ...*/) {
-    for (var i = 1, n = arguments.length; i < n; i++) {
-      parent.appendChild(arguments[i])
-    }
-
-    return parent
-  }
-
-  /**
-   * Creates an opacity keyframe animation rule and returns its name.
-   * Since most mobile Webkits have timing issues with animation-delay,
-   * we create separate rules for each line/segment.
-   */
-  function addAnimation (alpha, trail, i, lines) {
-    var name = ['opacity', trail, ~~(alpha * 100), i, lines].join('-')
-      , start = 0.01 + i/lines * 100
-      , z = Math.max(1 - (1-alpha) / trail * (100-start), alpha)
-      , prefix = useCssAnimations.substring(0, useCssAnimations.indexOf('Animation')).toLowerCase()
-      , pre = prefix && '-' + prefix + '-' || ''
-
-    if (!animations[name]) {
-      sheet.insertRule(
-        '@' + pre + 'keyframes ' + name + '{' +
-        '0%{opacity:' + z + '}' +
-        start + '%{opacity:' + alpha + '}' +
-        (start+0.01) + '%{opacity:1}' +
-        (start+trail) % 100 + '%{opacity:' + alpha + '}' +
-        '100%{opacity:' + z + '}' +
-        '}', sheet.cssRules.length)
-
-      animations[name] = 1
-    }
-
-    return name
-  }
-
-  /**
-   * Tries various vendor prefixes and returns the first supported property.
-   */
-  function vendor (el, prop) {
-    var s = el.style
-      , pp
-      , i
-
-    prop = prop.charAt(0).toUpperCase() + prop.slice(1)
-    if (s[prop] !== undefined) return prop
-    for (i = 0; i < prefixes.length; i++) {
-      pp = prefixes[i]+prop
-      if (s[pp] !== undefined) return pp
-    }
-  }
-
-  /**
-   * Sets multiple style properties at once.
-   */
-  function css (el, prop) {
-    for (var n in prop) {
-      el.style[vendor(el, n) || n] = prop[n]
-    }
-
-    return el
-  }
-
-  /**
-   * Fills in default values.
-   */
-  function merge (obj) {
-    for (var i = 1; i < arguments.length; i++) {
-      var def = arguments[i]
-      for (var n in def) {
-        if (obj[n] === undefined) obj[n] = def[n]
-      }
-    }
-    return obj
-  }
-
-  /**
-   * Returns the line color from the given string or array.
-   */
-  function getColor (color, idx) {
-    return typeof color == 'string' ? color : color[idx % color.length]
-  }
-
-  // Built-in defaults
-
-  var defaults = {
-    lines: 12             // The number of lines to draw
-  , length: 7             // The length of each line
-  , width: 5              // The line thickness
-  , radius: 10            // The radius of the inner circle
-  , scale: 1.0            // Scales overall size of the spinner
-  , corners: 1            // Roundness (0..1)
-  , color: '#000'         // #rgb or #rrggbb
-  , opacity: 1/4          // Opacity of the lines
-  , rotate: 0             // Rotation offset
-  , direction: 1          // 1: clockwise, -1: counterclockwise
-  , speed: 1              // Rounds per second
-  , trail: 100            // Afterglow percentage
-  , fps: 20               // Frames per second when using setTimeout()
-  , zIndex: 2e9           // Use a high z-index by default
-  , className: 'spinner'  // CSS class to assign to the element
-  , top: '50%'            // center vertically
-  , left: '50%'           // center horizontally
-  , shadow: false         // Whether to render a shadow
-  , hwaccel: false        // Whether to use hardware acceleration (might be buggy)
-  , position: 'absolute'  // Element positioning
-  }
-
-  /** The constructor */
-  function Spinner (o) {
-    this.opts = merge(o || {}, Spinner.defaults, defaults)
-  }
-
-  // Global defaults that override the built-ins:
-  Spinner.defaults = {}
-
-  merge(Spinner.prototype, {
-    /**
-     * Adds the spinner to the given target element. If this instance is already
-     * spinning, it is automatically removed from its previous target b calling
-     * stop() internally.
-     */
-    spin: function (target) {
-      this.stop()
-
-      var self = this
-        , o = self.opts
-        , el = self.el = createEl(null, {className: o.className})
-
-      css(el, {
-        position: o.position
-      , width: 0
-      , zIndex: o.zIndex
-      , left: o.left
-      , top: o.top
-      })
-
-      if (target) {
-        target.insertBefore(el, target.firstChild || null)
-      }
-
-      el.setAttribute('role', 'progressbar')
-      self.lines(el, self.opts)
-
-      if (!useCssAnimations) {
-        // No CSS animation support, use setTimeout() instead
-        var i = 0
-          , start = (o.lines - 1) * (1 - o.direction) / 2
-          , alpha
-          , fps = o.fps
-          , f = fps / o.speed
-          , ostep = (1 - o.opacity) / (f * o.trail / 100)
-          , astep = f / o.lines
-
-        ;(function anim () {
-          i++
-          for (var j = 0; j < o.lines; j++) {
-            alpha = Math.max(1 - (i + (o.lines - j) * astep) % f * ostep, o.opacity)
-
-            self.opacity(el, j * o.direction + start, alpha, o)
-          }
-          self.timeout = self.el && setTimeout(anim, ~~(1000 / fps))
-        })()
-      }
-      return self
-    }
-
-    /**
-     * Stops and removes the Spinner.
-     */
-  , stop: function () {
-      var el = this.el
-      if (el) {
-        clearTimeout(this.timeout)
-        if (el.parentNode) el.parentNode.removeChild(el)
-        this.el = undefined
-      }
-      return this
-    }
-
-    /**
-     * Internal method that draws the individual lines. Will be overwritten
-     * in VML fallback mode below.
-     */
-  , lines: function (el, o) {
-      var i = 0
-        , start = (o.lines - 1) * (1 - o.direction) / 2
-        , seg
-
-      function fill (color, shadow) {
-        return css(createEl(), {
-          position: 'absolute'
-        , width: o.scale * (o.length + o.width) + 'px'
-        , height: o.scale * o.width + 'px'
-        , background: color
-        , boxShadow: shadow
-        , transformOrigin: 'left'
-        , transform: 'rotate(' + ~~(360/o.lines*i + o.rotate) + 'deg) translate(' + o.scale*o.radius + 'px' + ',0)'
-        , borderRadius: (o.corners * o.scale * o.width >> 1) + 'px'
-        })
-      }
-
-      for (; i < o.lines; i++) {
-        seg = css(createEl(), {
-          position: 'absolute'
-        , top: 1 + ~(o.scale * o.width / 2) + 'px'
-        , transform: o.hwaccel ? 'translate3d(0,0,0)' : ''
-        , opacity: o.opacity
-        , animation: useCssAnimations && addAnimation(o.opacity, o.trail, start + i * o.direction, o.lines) + ' ' + 1 / o.speed + 's linear infinite'
-        })
-
-        if (o.shadow) ins(seg, css(fill('#000', '0 0 4px #000'), {top: '2px'}))
-        ins(el, ins(seg, fill(getColor(o.color, i), '0 0 1px rgba(0,0,0,.1)')))
-      }
-      return el
-    }
-
-    /**
-     * Internal method that adjusts the opacity of a single line.
-     * Will be overwritten in VML fallback mode below.
-     */
-  , opacity: function (el, i, val) {
-      if (i < el.childNodes.length) el.childNodes[i].style.opacity = val
-    }
-
-  })
-
-
-  function initVML () {
-
-    /* Utility function to create a VML tag */
-    function vml (tag, attr) {
-      return createEl('<' + tag + ' xmlns="urn:schemas-microsoft.com:vml" class="spin-vml">', attr)
-    }
-
-    // No CSS transforms but VML support, add a CSS rule for VML elements:
-    sheet.addRule('.spin-vml', 'behavior:url(#default#VML)')
-
-    Spinner.prototype.lines = function (el, o) {
-      var r = o.scale * (o.length + o.width)
-        , s = o.scale * 2 * r
-
-      function grp () {
-        return css(
-          vml('group', {
-            coordsize: s + ' ' + s
-          , coordorigin: -r + ' ' + -r
-          })
-        , { width: s, height: s }
-        )
-      }
-
-      var margin = -(o.width + o.length) * o.scale * 2 + 'px'
-        , g = css(grp(), {position: 'absolute', top: margin, left: margin})
-        , i
-
-      function seg (i, dx, filter) {
-        ins(
-          g
-        , ins(
-            css(grp(), {rotation: 360 / o.lines * i + 'deg', left: ~~dx})
-          , ins(
-              css(
-                vml('roundrect', {arcsize: o.corners})
-              , { width: r
-                , height: o.scale * o.width
-                , left: o.scale * o.radius
-                , top: -o.scale * o.width >> 1
-                , filter: filter
-                }
-              )
-            , vml('fill', {color: getColor(o.color, i), opacity: o.opacity})
-            , vml('stroke', {opacity: 0}) // transparent stroke to fix color bleeding upon opacity change
-            )
-          )
-        )
-      }
-
-      if (o.shadow)
-        for (i = 1; i <= o.lines; i++) {
-          seg(i, -2, 'progid:DXImageTransform.Microsoft.Blur(pixelradius=2,makeshadow=1,shadowopacity=.3)')
+        getPathUrl : function(path){
+            if (path == '/epub_library.json')
+            {
+                return 'epub_content/epub_library.json';
+            }
+            return path;
+        },
+        initStorage: function(success, error){
+            success();
         }
-
-      for (i = 1; i <= o.lines; i++) seg(i)
-      return ins(el, g)
     }
-
-    Spinner.prototype.opacity = function (el, i, val, o) {
-      var c = el.firstChild
-      o = o.shadow && o.lines || 0
-      if (c && i + o < c.childNodes.length) {
-        c = c.childNodes[i + o]; c = c && c.firstChild; c = c && c.firstChild
-        if (c) c.opacity = val
-      }
-    }
-  }
-
-  if (typeof document !== 'undefined') {
-    sheet = (function () {
-      var el = createEl('style', {type : 'text/css'})
-      ins(document.getElementsByTagName('head')[0], el)
-      return el.sheet || el.styleSheet
-    }())
-
-    var probe = css(createEl('group'), {behavior: 'url(#default#VML)'})
-
-    if (!vendor(probe, 'transform') && probe.adj) initVML()
-    else useCssAnimations = vendor(probe, 'animation')
-  }
-
-  return Spinner
-
-}));
-
-define('readium_js_viewer/Spinner',['spin'], function(Spinner){
-    var opts = {
-      lines: 17, // The number of lines to draw
-      length: 0, // The length of each line
-      width: 10, // The line thickness
-      radius: 48, // The radius of the inner circle
-      corners: 1, // Corner roundness (0..1)
-      rotate: 0, // The rotation offset
-      direction: 1, // 1: clockwise, -1: counterclockwise
-      color: '#000', // #rgb or #rrggbb or array of colors
-      speed: 1, // Rounds per second
-      trail: 66, // Afterglow percentage
-      shadow: false, // Whether to render a shadow
-      hwaccel: false, // Whether to use hardware acceleration
-      className: 'spinner', // The CSS class to assign to the spinner
-      zIndex: 2e9, // The z-index (defaults to 2000000000)
-      top: '50%', // Top position relative to parent in px
-      left: '50%' // Left position relative to parent in px
-    };
-    return new Spinner(opts);
+    return StaticStorageManager;
 });
+
 define('Settings',[],function(){
     
     // localStorage may be disabled due to zero-quota issues (e.g. iPad in private browsing mode)
@@ -64553,6 +64182,451 @@ define('Settings',[],function(){
     }
     return Settings;
 });
+/**
+* Jath is free software provided under the MIT license.
+*	See LICENSE file for full text of the license.
+*	Copyright 2010 Dan Newcome.
+*/
+(function() {
+
+Jath = {};
+Jath.parse = parse;
+Jath.resolver = null;
+Jath.namespaces = null;
+
+// values prefixed with literal charactar marker will not be
+// treated as xpath expressions and will be output directly
+Jath.literalChar = ":";
+
+/**
+* Rudimentary check for IE
+* Also added support for WSH, uses the same API as IE
+*/
+var m_browser;
+if( typeof WScript != "undefined" ) {
+	m_browser = 'msie';
+}
+// TODO: is there a better way to detect node.js?
+else if( typeof process != "undefined" ) {
+	// running under node.js
+	m_browser = 'node';
+	var xmljs = require( 'libxmljs' );
+	exports.parse = parse;
+}
+else if( navigator.userAgent.toLowerCase().indexOf( 'msie' ) > -1 ) {
+	m_browser = 'msie';
+}
+else {
+	m_browser = 'standards';
+}
+
+/**
+* parse: 
+*	process xml doc according to the given json template
+*	@template - output spec as a json template
+*	@xmldoc - input xml document
+*	@node - the starting node to use in the document. xpath
+*		expressions will be evaluated relative to this node.
+*		If not given, root will be used.
+*/
+function parse( template, xmldoc, node ) {
+	if( node === undefined ) {
+		node = xmldoc;
+	}
+	if( typeOf( template ) === 'array' ) {
+		return parseArray( template, xmldoc, node );
+	}
+	else if( typeOf( template ) === 'object' ) {
+		return parseObject( template, xmldoc, node );
+	}
+	else {
+		return parseItem( template, xmldoc, node );
+	}
+}
+
+function parseArray( template, xmldoc, node ) {
+	var retVal = [];
+	
+	if( template[0] != null ) {
+		if( m_browser == 'msie' ) {
+			xmldoc.setProperty("SelectionLanguage", "XPath");
+			xmldoc.setProperty("SelectionNamespaces", createResolverString() );			
+			var nodeList = node.selectNodes( template[0] );
+			var thisNode;
+			while( thisNode = nodeList.nextNode() ) {
+				retVal.push( parse( template[1], xmldoc, thisNode ) );
+			}
+		}
+		else if( m_browser == 'node' ) {
+			var nodeList = node.find( template[0] );
+			for( var i=0; i < nodeList.length; i++ ) {
+				retVal.push( parse( template[1], xmldoc, nodeList[i] ) );
+			}
+		}
+		else {
+			var xpathResult = xmldoc.evaluate( template[0], node, Jath.resolver, XPathResult.ANY_TYPE, null );
+			var thisNode;
+			while( thisNode = xpathResult.iterateNext() ) {
+				retVal.push( parse( template[1], xmldoc, thisNode ) );
+			}
+		}
+	}
+	// we can have an array output without iterating over the source
+	// data - in this case, current node is static 
+	else {
+		for( var i=1; i < template.length; i++ ) {
+			retVal.push( parse( template[i], xmldoc, node ) );
+		}
+	}
+	
+	return retVal;
+}
+
+function parseObject( template, xmldoc, node ) {
+	var item;
+	var newitem = {};
+	for( item in template ) {
+		newitem[item] = parse( template[item], xmldoc, node );
+	}
+	return newitem;
+}
+
+function parseItem( template, xmldoc, node ) {
+	if( typeOf( template ) == 'string' && template.substring( 0, 1 ) != Jath.literalChar ) {
+		if( m_browser == 'msie' ) {
+			xmldoc.setProperty("SelectionLanguage", "XPath");
+			xmldoc.setProperty("SelectionNamespaces", createResolverString() );
+			if( node.selectSingleNode( template ) != null ) {
+				return node.selectSingleNode( template ).text;
+			}
+			else {
+				return null;
+			}
+		}
+		else if( m_browser == 'node' ) {
+			var itemNode = node.get( template );
+			if( itemNode && itemNode.text ) {
+				return itemNode.text();
+			}
+			else if( itemNode && itemNode.value ) {
+				return itemNode.value();
+			}
+			else {
+				return null;
+			}
+		}
+		else {
+			var itemNode = xmldoc.evaluate( template, node, Jath.resolver, XPathResult.STRING_TYPE, null ); 
+			if( itemNode ) {
+				return itemNode.stringValue;
+			}
+			else {
+				return null;
+			}
+		}
+	}
+	else {
+		return template.substring( 1 );
+	}
+
+}
+
+/**
+* typeOf function published by Douglas Crockford in ECMAScript recommendations
+* http://www.crockford.com/javascript/recommend.html
+*/
+function typeOf(value) {
+	var s = typeof value;
+	if (s === 'object') {
+		if (value) {
+			if (typeof value.length === 'number' &&
+					!(value.propertyIsEnumerable('length')) &&
+					typeof value.splice === 'function') {
+				s = 'array';
+			}
+		} else {
+			s = 'null';
+		}
+	}
+	return s;
+}
+
+/**
+* IE requires namespaces to be in the form that 
+* an xml document would provide. Use underscore
+* for default ns.
+*/
+function createResolverString() {
+	var retval = [];
+	for( var item in Jath.namespaces ) {
+		if( item == "_" ) {
+			retval.push( "xmlns='" + Jath.namespaces[item] + "'" );
+		}
+		else {
+			retval.push( "xmlns:" + item + "='" + Jath.namespaces[item] + "'" );
+		}
+	}
+	return retval.join(" ");
+}
+
+})();
+
+define("jath", (function (global) {
+    return function () {
+        var ret, fn;
+        return ret || global.Jath;
+    };
+}(this)));
+
+define('readium_js_viewer/PackageParser',['jath'], function(Jath){
+    Jath.resolver = function( prefix ) {
+            var mappings = { 
+                def: "http://www.idpf.org/2007/opf",
+                    dc: "http://purl.org/dc/elements/1.1/"
+            };
+            return mappings[ prefix ];
+    }
+
+    var jathTemplate = {
+
+        metadata:  { 
+                id: "//def:metadata/dc:identifier",
+                epub_version: "//def:package/@version",
+                title: "//def:metadata/dc:title",
+                author: "//def:metadata/dc:creator",
+                publisher: "//def:metadata/dc:publisher",
+                description: "//def:metadata/dc:description",
+                rights: "//def:metadata/dc:rights",
+                language: "//def:metadata/dc:language",
+                pubdate: "//def:metadata/dc:date",
+                modified_date: "//def:metadata/def:meta[@property='dcterms:modified']",
+                layout: "//def:metadata/def:meta[@property='rendition:layout']",
+                spread: "//def:metadata/def:meta[@property='rendition:spread']",
+                orientation: "//def:metadata/def:meta[@property='rendition:orientation']",
+                ncx: "//def:spine/@toc",
+                page_prog_dir: "//def:spine/@page-progression-direction",
+                active_class: "//def:metadata/def:meta[@property='media:active-class']"
+         },
+
+        manifest: [ "//def:item", { 
+                id: "@id",
+                href: "@href",
+                media_type: "@media-type",
+                properties: "@properties",
+        media_overlay: "@media-overlay"
+        } ],
+                                                 
+        spine: [ "//def:itemref", { idref: "@idref", properties: "@properties", linear: "@linear" } ],
+
+        bindings: ["//def:bindings/def:mediaType", { 
+                handler: "@handler",
+                media_type: "@media-type"
+        } ]
+        
+    };
+
+    PackageParser = {
+        parsePackageDom : function(data){
+            var jsonObj = Jath.parse(jathTemplate, data);
+            jsonObj = jsonObj.metadata;
+            jsonObj.coverHref = PackageParser.getCoverHref(data);
+            return jsonObj;
+        },
+        getCoverHref : function(dom) {
+            var manifest; var $imageNode;
+            manifest = dom.getElementsByTagName('manifest')[0];
+
+            // epub3 spec for a cover image is like this:
+            /*<item properties="cover-image" id="ci" href="cover.svg" media-type="image/svg+xml" />*/
+            $imageNode = $('item[properties~="cover-image"]', manifest);
+            if($imageNode.length === 1 && $imageNode.attr("href") ) {
+                return $imageNode.attr("href");
+            }
+
+            // some epub2's cover image is like this:
+            /*<meta name="cover" content="cover-image-item-id" />*/
+            // PragProg ebooks have two cover entries in meta, both
+            // referencing the same cover id from items; metaNode.length
+            // does not have to be just 1
+            var metaNode = $('meta[name="cover"]', dom);
+            var contentAttr = metaNode.attr("content");
+            if(metaNode.length >= 1 && contentAttr) {
+                $imageNode = $('item[id="'+contentAttr+'"]', manifest);
+                if($imageNode.length === 1 && $imageNode.attr("href")) {
+                    return $imageNode.attr("href");
+                }
+            }
+
+            // that didn't seem to work so, it think epub2 just uses item with id=cover
+            $imageNode = $('#cover', manifest);
+            if($imageNode.length === 1 && $imageNode.attr("href")) {
+                return $imageNode.attr("href");
+            }
+
+            // seems like there isn't one, thats ok...
+            return null;
+        },
+    }
+    return PackageParser;
+});
+define('readium_js_viewer/workers/Messages',[],function(){
+    return {
+        // window -> worker messages
+        IMPORT_ZIP : 0,
+        OVERWRITE_CONTINUE : 1,
+        FIND_PACKAGE_RESPONSE: 2,
+        PARSE_PACKAGE_RESPONSE: 3,
+        DELETE_EPUB : 4,
+        IMPORT_DIR : 5,
+        IMPORT_URL: 6,
+        MIGRATE: 7,
+        OVERWRITE_SIDE_BY_SIDE: 8,
+        CONTINUE_IMPORT_ZIP: 9,
+
+        // worker -> window messages
+        SUCCESS : 100,
+        PROGRESS : 101,
+        ERROR : 102,
+        OVERWRITE : 103,
+        FIND_PACKAGE : 104,
+        PARSE_PACKAGE: 105,
+
+
+        PROGRESS_EXTRACTING : 200,
+        PROGRESS_WRITING: 201,
+        PROGRESS_DELETING: 202,
+        PROGRESS_MIGRATING: 203,
+
+        ERROR_STORAGE : 300,
+        ERROR_EPUB : 301,
+        ERROR_AJAX : 302,
+        ERROR_PACKAGE_PARSE: 303,
+        
+        READY: 400
+    }
+});
+define('readium_js_viewer/workers/WorkerProxy',['../ModuleConfig', './Messages', 'jquery', '../PackageParser', 'readium_js/epub-fetch/encryption_handler'], function(moduleConfig, Messages, $, PackageParser, EncryptionHandler){
+
+    var worker;
+    var cleanupWorker = function(){
+        if (worker) {
+            worker.terminate();
+            worker = null;
+        }
+    }
+    var doWork = function(job, callbacks){
+        if (worker){
+            console.log('dangling worker');
+        }
+
+        var workerUrl = moduleConfig.workerUrl;
+        worker = new Worker(workerUrl);
+
+        var continueOverwrite = function(){
+            worker.postMessage({msg: Messages.OVERWRITE_CONTINUE});
+        }
+        var keepBoth = function(){
+            worker.postMessage({msg: Messages.OVERWRITE_SIDE_BY_SIDE})
+        }
+        var cancelOverwrite = function(){
+            cleanupWorker();
+        }
+
+        var innerError = callbacks.error || $.noop;
+        var error = function(error, data){
+            cleanupWorker();
+            innerError(error, data);
+        }
+
+
+
+        worker.onmessage = function(evt){
+            var data = evt.data;
+            switch (data.msg){
+                case Messages.READY:                
+                    worker.postMessage(job);
+                    break;
+                case Messages.SUCCESS:
+                    if (callbacks.success){
+                        callbacks.success(data.libraryItems);
+                    }
+                    cleanupWorker();
+                    break;
+                case Messages.CONTINUE_IMPORT_ZIP:
+                    cleanupWorker();
+                    doWork({msg: Messages.CONTINUE_IMPORT_ZIP, buf: data.buf, index: data.index, rootDirName: data.rootDirName, libraryItems: data.libraryItems}, callbacks);
+                    break;
+                case Messages.PROGRESS:
+                    if (callbacks.progress){
+                        callbacks.progress(data.percent, data.progressType, data.progressData);
+                    }
+                    break;
+                case Messages.OVERWRITE:
+                    if (callbacks.overwrite){
+                        callbacks.overwrite(data.item, continueOverwrite, keepBoth, cancelOverwrite);
+                    }
+                    break;
+                case Messages.FIND_PACKAGE:
+                    var containerDom = (new DOMParser()).parseFromString(data.containerStr, "text/xml");
+                    var $rootfile = $('rootfile', containerDom);
+                    if (!$rootfile.length){
+                        error(Messages.ERROR_EPUB);
+                        console.error('Epub container.xml missing rootfile element');
+                    }
+                    else{
+                        worker.postMessage({msg: Messages.FIND_PACKAGE_RESPONSE, path: $rootfile.attr('full-path')});
+                    }
+                    break;
+                case Messages.PARSE_PACKAGE:
+                    var packageDom = (new DOMParser()).parseFromString(data.packageStr, "text/xml");
+                    var errors = $(packageDom).find('parsererror');
+                    if (errors.length) {
+                        error(Messages.ERROR_PACKAGE_PARSE, $(errors).find('div').text());
+                        console.error('There was an xml parsing error when trying to parse the package dom');
+                    }
+                    else {
+                        var packageObj = PackageParser.parsePackageDom(packageDom);
+
+                        var encryptionData;
+                        if(data.encryptionStr) {
+                            var encryptionDom = (new DOMParser()).parseFromString(data.encryptionStr, "text/xml");
+
+                            encryptionData = EncryptionHandler.CreateEncryptionData(packageObj.id, encryptionDom);
+                        }
+
+                        worker.postMessage({msg: Messages.PARSE_PACKAGE_RESPONSE, packageObj: packageObj, encryptionData: encryptionData});
+                    }
+                    break;
+                default:
+                    error(data.errorMsg || "Unknown error");
+                    cleanupWorker();
+            }
+        };
+        
+        worker.onerror = function(){
+            console.error(arguments)
+        }
+    }
+
+    return {
+        importZip: function(blob, libraryItems, callbacks){
+            doWork({msg: Messages.IMPORT_ZIP, buf: blob, libraryItems: libraryItems}, callbacks);
+        },
+        importDirectory : function(files, libraryItems, callbacks){
+            doWork({msg: Messages.IMPORT_DIR, files: files, libraryItems: libraryItems}, callbacks);
+        },
+        importUrl : function(url, libraryItems, callbacks){
+            doWork({msg: Messages.IMPORT_URL, url: url, libraryItems: libraryItems}, callbacks);
+        },
+        deleteEpub : function(id, libraryItems, callbacks){
+            doWork({msg: Messages.DELETE_EPUB, id: id, libraryItems:libraryItems}, callbacks);
+        },
+        migrateOldBooks : function(callbacks){
+            doWork({msg: Messages.MIGRATE}, callbacks);
+        }
+    }
+});
+
 
 define('text!readium_js_viewer_i18n/_locales/de/messages.json',[],function () { return '{ "about": {\n    "message": "Über Readium"\n    },\n    "preview": {\n        "message": "Vorschau"\n    },\n    "list_view": {\n        "message": "Listenansicht"\n    },\n    "thumbnail_view": {\n        "message": "Kachelansicht"\n    },\n    "view_library": {\n        "message": "Bibliothek"\n    },\n    "highlight_selection": {\n        "message": "Ausgewählten Text hervorheben"\n    },\n    "toc": {\n        "message": "Inhaltsverzeichnis"\n    },\n    "settings": {\n        "message": "Einstellungen"\n    },\n    "enter_fullscreen": {\n        "message": "Vollbildmodus"\n    },\n    "exit_fullscreen": {\n        "message": "Vollbildmodus verlassen"\n    },\n    "chrome_extension_name": {\n        "message": "Readium"\n    },\n    "chrome_extension_description": {\n        "message": "Ein Leseprogramm für EPUB3 Bücher."\n    },\n    "ok" : {\n        "message" : "Ok"\n    },\n    "i18n_readium_library": {\n        "message": "Readium Bibliothek"\n    },\n    "i18n_loading": {\n        "message": "Bibliothek wird geladen"\n    },\n    "i18n_readium_options": {\n        "message": "Readium Einstellungen:"\n    },\n    "i18n_save_changes": {\n        "message": "Änderungen speichern"\n    },\n    "i18n_close": {\n        "message": "Schließen"\n    },\n    "i18n_keyboard_shortcuts": {\n        "message": "Funktionstasten"\n    },\n    "i18n_keyboard_reload": {\n        "message": "Bitte laden Sie die Seite im Browser neu, damit die Änderungen der Tastaturkürzel wirksam werden."\n    },\n    "i18n_reset_key": {\n        "message": "Taste zurücksetzen"\n    },\n    "i18n_reset_key_all": {\n        "message": "Alle Funktionstasten auf Standard zurücksetzen"\n    },\n    "i18n_duplicate_keyboard_shortcut": {\n        "message": "Doppelbelegung"\n    },\n    "i18n_invalid_keyboard_shortcut": {\n        "message": "Nicht zulässig"\n    },\n    "i18n_paginate_all": {\n        "message": "Fließtext des EPUB Inhalts paginieren"\n    },\n    "i18n_automatically": {\n        "message": "*.epub URLs automatisch in Readium öffnen"\n    },\n    "i18n_show_warning": {\n        "message": "Warnhinweise beim Entpacken von EPUB Dateien anzeigen"\n    },\n    "i18n_details": {\n        "message": "Details"\n    },\n    "i18n_read": {\n        "message": "Lesen"\n    },\n    "i18n_delete": {\n        "message": "Löschen"\n    },\n    "i18n_are_you_sure": {\n        "message": "Möchten Sie diese Datei wirklich unwiderruflich löschen?"\n    },\n    "delete_dlg_title": {\n        "message": "Löschen bestätigen"\n    },\n\n    "i18n_auto_page_turn_enable": {\n        "message": "Automatisches Umblättern einschalten"\n    },\n    "i18n_auto_page_turn_disable": {\n        "message": "Automatisches Umblättern ausschalten"\n    },\n\n    "i18n_playback_scroll_enable": {\n        "message": "Scrollen während der Wiedergabe"\n    },\n    "i18n_playback_scroll_disable": {\n        "message": "Kein Scrollen während der Wiedergabe"\n    },\n    "i18n_audio_touch_enable": {\n        "message": "Touch-to-play einschalten"\n    },\n    "i18n_audio_touch_disable": {\n        "message": "Touch-to-play ausschalten"\n    },\n    "i18n_audio_highlight_default": {\n        "message": "Standard"\n    },\n    "i18n_audio_highlight": {\n        "message": "Hervorhebungsfarbe"\n    },\n\n    "delete_progress_title": {\n        "message": "Löschen wird ausgeführt"\n    },\n    "delete_progress_message": {\n        "message": "Löschen"\n    },\n    "migrate_dlg_title": {\n        "message": "Bücher migrieren"\n    },\n    "migrate_dlg_message": {\n        "message": "Daten werden geladen..."\n    },\n    "migrating": {\n        "message": "Migrieren..."\n    },\n    "replace_dlg_title": {\n        "message": "Konflikt festgestellt"\n    },\n    "replace_dlg_message": {\n        "message": "Soll das bestehende EPUB wirklich ersetzt werden?"\n    },\n    "import_dlg_title": {\n        "message": "EPUB importieren"\n    },\n    "import_dlg_message": {\n        "message": "EPUB Inhalt überprüfen..."\n    },\n    "storing_file": {\n        "message": "Datei speichern"\n    },\n    "err_unknown": {\n        "message": "Unbekannter Fehler. Für Details öffnen Sie die Konsole."\n    },\n    "err_storage": {\n        "message": "Zugriff auf Dateispeicher nicht möglich."\n    },\n    "err_epub_corrupt": {\n        "message": "Ungültiges oder beschädigtes EPUB Paket"\n    },\n    "err_dlg_title": {\n        "message": "Unerwarteter Fehler"\n    },\n    "replace" : {\n        "message": "Ersetzen"\n    },\n    "i18n_author": {\n        "message": "Autor: "\n    },\n    "i18n_publisher": {\n        "message": "Verlag: "\n    },\n    "i18n_source": {\n        "message": "Quelle: "\n    },\n    "i18n_pub_date": {\n        "message": "Veröffentlicht am: "\n    },\n    "i18n_modified_date": {\n        "message": "Zuletzt geändert am: "\n    },\n    "i18n_id": {\n        "message": "ID: "\n    },\n    "i18n_epub_version": {\n        "message": "EPUB Version: "\n    },\n    "i18n_created_at": {\n        "message": "Erstellt am: "\n    },\n    "i18n_format": {\n        "message": "Format: "\n    },\n    "i18n_added": {\n        "message": "Hinzugefügt am: "\n    },\n    "i18n_unknown": {\n        "message": "Unbekannt"\n    },\n    "i18n_sorry": {\n        "message": "Das aktuelle EPUB enthält für diesen Inhalt keine Media Overlays."\n    },\n    "i18n_add_items": {\n        "message": "Füge Werke zur Bibliothek hinzu."\n    },\n    "i18n_extracting": {\n        "message": "Entpacke: "\n    },\n    "i18n_add_book_to_readium_library": {\n        "message": "Buch zur Readium Bibliothek hinzufügen:"\n    },\n    "i18n_add_book": {\n        "message": "Buch hinzufügen"\n    },\n    "i18n_cancel": {\n        "message": "Abbrechen"\n    },\n    "i18n_from_the_web": {\n        "message": "Internet:"\n    },\n    "i18n_from_local_file": {\n        "message": "Lokale Datei:"\n    },\n    "i18n_enter_a_url": {\n        "message": "URL einer .epub Datei eingeben"\n    },\n    "i18n_unpacked_directory": {\n        "message": "Entpacktes Verzeichnis:"\n    },\n    "i18n_validate": {\n        "message": "Prüfe:"\n    },\n    "i18n_confirm_that_this_book": {\n        "message": "Bestätigung, dass dieses Buch mit EPUB Standards übereinstimmt"\n    },\n    "i18n_single_pages": {\n        "message": "Einzelseiten"\n    },\n    "i18n_double_pages": {\n        "message": "Doppelseiten"\n    },\n    "i18n_save_settings": {\n        "message": "Einstellungen speichern"\n    },\n    "i18n_font_size": {\n        "message": "Schriftgröße"\n    },\n    "i18n_margins": {\n        "message": "Rand"\n    },\n    "i18n_text_and_background_color": {\n        "message": "Text- und Hintergrundfarbe"\n    },\n    "i18n_author_theme": {\n        "message": "Vorgabe des Autors"\n    },\n    "i18n_black_and_white": {\n        "message": "Schwarzweiss"\n    },\n    "i18n_arabian_nights": {\n        "message": "Arabian Nights"\n    },\n    "i18n_sands_of_dune": {\n        "message": "Sands of Dune"\n    },\n    "i18n_ballard_blues": {\n        "message": "Ballard Blues"\n    },\n    "i18n_vancouver_mist": {\n        "message": "Vancouver Mist"\n    },\n    "i18n_display_format": {\n        "message": "Anzeigeformat"\n    },\n    "i18n_spread_auto": {\n        "message": "Automatisch"\n    },\n    "i18n_scroll_mode": {\n        "message": "Scroll Modus"\n    },\n    "i18n_scroll_mode_auto": {\n        "message": "Automatisch"\n    },\n    "i18n_scroll_mode_doc": {\n        "message": "Dokument"\n    },\n    "i18n_scroll_mode_continuous": {\n        "message": "Kontinuierlich"\n    },\n\n    "i18n_page_transition": {\n        "message": "Umblätter-Effekt"\n    },\n    "i18n_page_transition_none": {\n        "message": "Keiner"\n    },\n    "i18n_page_transition_fade": {\n        "message": "Fade"\n    },\n    "i18n_page_transition_slide": {\n        "message": "Slide"\n    },\n    "i18n_page_transition_swoosh": {\n        "message": "Swoosh"\n    },\n    "i18n_page_transition_butterfly": {\n        "message": "Butterfly"\n    },\n    "i18n_html_readium_tm_a_project": {\n        "message": "Readium für Chrome ist die Chrome Browser Erweiterung basierend auf ReadiumJS, einem Open-Source Lesesystem und einer JavaScript Bibliothek zur Darstellung von EPUB® Veröffentlichungen in Web-Browsern. ReadiumJS ist ein Projekt der Readium Foundation (Readium.org). Wenn Sie mehr darüber erfahren möchten oder das Projekt unterstützen wollen, besuchen Sie bitte die <a href=\\"http://readium.org/\\">Projekt Homepage</a>."\n\n    },\n    "gethelp": {\n        "message": "Falls Sie auf Probleme stoßen, Fragen haben oder \\"Hallo\\" sagen möchten, besuchen Sie <a href=\\"http://idpf.org/forums/readium\\">unser Forum</a>."\n    },\n    "i18n_toolbar": {\n        "message": "Werkzeugleiste"\n    },\n    "i18n_toolbar_show": {\n        "message": "Werkzeugleiste anzeigen"\n    },\n    "i18n_toolbar_hide": {\n        "message": "Werkzeugleiste ausblenden"\n    },\n    "i18n_audio_play": {\n        "message": "Audio - Abspielen"\n    },\n    "i18n_audio_pause": {\n        "message": "Audio - Pause"\n    },\n    "i18n_audio_play_background": {\n        "message": "Hintergrundaudio ein"\n    },\n    "i18n_audio_pause_background": {\n        "message": "Hintergrundaudio aus"\n    },\n    "i18n_audio_previous": {\n        "message": "Vorige Audiophrase"\n    },\n    "i18n_audio_next": {\n        "message": "Nächste Audiophrase"\n    },\n    "i18n_audio_volume": {\n        "message": "Lautstärke"\n    },\n    "i18n_audio_volume_increase": {\n        "message": "Lautstärke erhöhen"\n    },\n    "i18n_audio_volume_decrease": {\n        "message": "Lautstärke verringern"\n    },\n    "i18n_audio_time": {\n        "message": "Audio - Zeitmarke"\n    },\n    "i18n_audio_mute": {\n        "message": "Audio ausschalten"\n    },\n    "i18n_audio_unmute": {\n        "message": "Audio einschalten"\n    },\n    "i18n_audio_expand": {\n        "message": "Erweiterte Audio-Steuerung anzeigen"\n    },\n    "i18n_audio_collapse": {\n        "message": "Erweiterte Audio-Steuerung ausblenden"\n    },\n    "i18n_audio_esc": {\n        "message": "Aktuellen Audio-Bereich verlassen"\n    },\n    "i18n_audio_rate": {\n        "message": "Audio - Wiedergabegeschwindigkeit"\n    },\n    "i18n_audio_rate_increase": {\n        "message": "Audio - Wiedergabegeschwindigkeit erhöhen"\n    },\n    "i18n_audio_rate_decrease": {\n        "message": "Audio - Wiedergabegeschwindigkeit verringern"\n    },\n    "i18n_audio_rate_reset": {\n        "message": "Audio - Wiedergabegeschwindigkeit zurücksetzen"\n    },\n    "i18n_audio_skip_disable": {\n        "message": "Audio - Überspringen unterbinden "\n    },\n    "i18n_audio_skip_enable": {\n        "message": "Audio - Überspringen ermöglichen"\n    },\n    "i18n_audio_sync": {\n        "message": "Text-Audio-Synchronisation"\n    },\n    "i18n_audio_sync_default": {\n        "message": "Nach Vorgabe"\n    },\n    "i18n_audio_sync_word": {\n        "message": "Wort"\n    },\n    "i18n_audio_sync_sentence": {\n        "message": "Satz"\n    },\n    "i18n_audio_sync_paragraph": {\n        "message": "Absatz"\n    },\n    "i18n_page_previous": {\n        "message": "Vorige Seite"\n    },\n    "i18n_page_next": {\n        "message": "Nächste Seite"\n    },\n    "chrome_accept_languages": {\n        "message": "$CHROME$ akzeptiert $languages$ Sprachen",\n        "placeholders": {\n            "chrome": {\n                "content": "Chrome",\n                "example": "Chrome"\n            },\n            "languages": {\n                "content": "$1",\n                "example": "en-US,ja,sr,de,zh_CN"\n            }\n        }\n    }\n}';});
 
@@ -64644,6 +64718,487 @@ function(de, es, en_US, fr, it, id, ja, ko, pt_BR, zh_CN, zh_TW){
         i18nObj[prop] = okay ? i18nObj[prop].message : (allowEnglishFallback ? ("*"+i18nObj_en[prop].message) : "");
     }
     return i18nObj;
+
+});
+
+define('readium_js_viewer/EpubLibraryOPDS',[
+'./ModuleConfig',
+'jquery',
+'readium_shared_js/helpers',
+'URIjs'
+],
+
+function(
+moduleConfig,
+$,
+Helpers,
+URI){
+
+    var processOPDS = function(opdsURL, data, dataSuccess, dataFail) {
+
+        var CORS_PROXY_HTTP_TOKEN = "/http://";
+        var CORS_PROXY_HTTPS_TOKEN = "/https://";
+        
+        // Ensures URLs like http://crossorigin.me/http://domain.com/etc
+        // do not end-up loosing the double forward slash in http://domain.com
+        // (because of URI.absoluteTo() path normalisation)
+        var CORS_PROXY_HTTP_TOKEN_ESCAPED = "/http%3A%2F%2F";
+        var CORS_PROXY_HTTPS_TOKEN_ESCAPED = "/https%3A%2F%2F";
+        
+        // case-insensitive regexp for percent-escapes
+        var regex_CORS_PROXY_HTTPs_TOKEN_ESCAPED = new RegExp("/(http[s]?):%2F%2F", "gi");
+        
+        var xOriginProxy = undefined;
+        
+        var origin = window.location.origin; 
+        if (!origin) {
+            origin = window.location.protocol + '//' + window.location.host;
+        }
+        var thisRootUrl = origin + window.location.pathname;
+        
+        var opdsURLAbsolute = opdsURL; 
+
+        var opdsURLAbsoluteUri = undefined;
+        try {
+            opdsURLAbsoluteUri = new URI(opdsURLAbsolute);
+        } catch(err) {
+            console.error(err);
+            console.log(opdsURLAbsolute);
+        }
+        
+        if (opdsURLAbsoluteUri && !opdsURLAbsoluteUri.is("absolute")) { // "http://", "https://", "data:", etc.
+
+            try {
+                opdsURLAbsolute = opdsURLAbsoluteUri.absoluteTo(thisRootUrl).toString();
+            } catch(err) {
+                console.error(err);
+                console.log(opdsURLAbsolute);
+            }
+        } else {
+        
+            var ihttp = opdsURLAbsolute.indexOf(CORS_PROXY_HTTP_TOKEN);
+            if (ihttp < 0) {
+                ihttp = opdsURLAbsolute.indexOf(CORS_PROXY_HTTPS_TOKEN);
+            }
+            if (ihttp > 0) {
+                xOriginProxy = opdsURLAbsolute.substr(0, ihttp);
+                console.log("-- Detected CORS proxy: " + xOriginProxy);
+            }
+        }
+        
+        if (typeof data === "string") {
+            data = $.parseXML(data);
+        }
+        
+        $xml = $(data);
+        
+        var json = [];
+        
+        $xml.find('entry').each(function() {
+            var $entry = $(this);
+            
+            var title = $entry.find('title').text();
+            var author = $entry.find('author').find('name').text();
+            
+            var coverHref = undefined;
+            var coverHref_thumb = undefined;
+            
+            var rootUrl_EPUBAcquisition = undefined;
+            var rootUrl_EPUBAcquisitionIndirect = undefined;
+            var rootUrl_SubOPDS = undefined;
+                    
+            $entry.find('link').each(function() {
+                var $link = $(this);
+                
+                var href  = $link.attr('href');
+                if (href) {
+                    if (href.indexOf("//") == 0) {
+                        href = "http:" + href;
+                    }
+                    
+                    var t  = $link.attr('type');
+                    var rel  = $link.attr('rel');
+                
+                    var hasAcquisition = rel && rel.indexOf("http://opds-spec.org/acquisition") == 0;
+                    
+                    if (hasAcquisition) {
+                        if (t) {
+                            if (t.indexOf("application/epub") >= 0) {
+                                rootUrl_EPUBAcquisition = href;
+                            }
+                            if (t.indexOf("text/html") >= 0) {
+                                rootUrl_EPUBAcquisitionIndirect = href;
+                            }
+                        } else {
+                            if (/\.epub[3?]$/.test(href)) {
+                                rootUrl_EPUBAcquisition = href;
+                            }
+                        }
+                    } else {
+                        if (t && t.indexOf("application/epub") >= 0) {
+                            rootUrl_EPUBAcquisition = href;
+                        }
+                    }
+                    
+                    if (t && t.indexOf("application/atom+xml") >= 0) {
+                        if (!rootUrl_SubOPDS || rel == "subsection")
+                        {
+                            rootUrl_SubOPDS = href;
+                        }
+                    }
+                    
+                    if (t && t.indexOf("image/") == 0) {
+                        
+                        if (rel == "http://opds-spec.org/image" || rel == "x-stanza-cover-image") {
+                            coverHref = href;
+                        } else if (rel == "http://opds-spec.org/image/thumbnail" || rel == "x-stanza-cover-image-thumbnail") {
+                            coverHref_thumb = href;
+                        }
+                    }
+                }
+            });
+            
+            if (rootUrl_EPUBAcquisition || rootUrl_EPUBAcquisitionIndirect) {
+                rootUrl_SubOPDS = undefined;
+            }
+            
+            if (rootUrl_EPUBAcquisition) {
+                rootUrl_EPUBAcquisitionIndirect = undefined;
+            }
+            
+            if (!author && rootUrl_SubOPDS) {
+                $xml.find('author').each(function() {
+                    var $author = $(this);
+                    
+                    var name = $author.find('name').text();
+                    if (name) {
+                        author = name;
+                    }
+                });
+            }
+            
+            if (!coverHref || coverHref_thumb) {
+                coverHref = coverHref_thumb;
+            }
+            
+            if (coverHref) {
+                
+                var coverHrefUri = undefined;
+                try {
+                    coverHrefUri = new URI(coverHref);
+                } catch(err) {
+                    console.error(err);
+                    console.log(coverHref);
+                }
+                
+                if (coverHrefUri && !coverHrefUri.is("absolute")) { // "http://", "https://", "data:", etc.
+
+                    var opdsURLAbsolute_ = opdsURLAbsolute;
+                    if (xOriginProxy) {
+                        //console.log("Removing CORS proxy from URL: " + opdsURLAbsolute_);
+                        opdsURLAbsolute_ = opdsURLAbsolute_.replace(xOriginProxy + "/", "");
+                    }
+                    
+                    try {
+                        coverHref = coverHrefUri.absoluteTo(opdsURLAbsolute_).toString();
+                    } catch(err) {
+                        console.error(err);
+                        console.log(coverHref);
+                    }
+                }
+            }
+            
+            var rootUrl = rootUrl_EPUBAcquisition || rootUrl_EPUBAcquisitionIndirect || rootUrl_SubOPDS;
+            if (rootUrl) {
+                console.log("OPDS entry URL: " + rootUrl);
+                
+                var isExternalLink = (typeof rootUrl_EPUBAcquisitionIndirect) != "undefined"; //(rootUrl == rootUrl_EPUBAcquisitionIndirect);
+                var isSubLibraryLink = (typeof rootUrl_SubOPDS) != "undefined"; //(rootUrl == rootUrl_SubOPDS);
+
+                var rootUrlUri = undefined;
+                try {
+                    rootUrlUri = new URI(rootUrl);
+                } catch(err) {
+                    console.error(err);
+                    console.log(rootUrl);
+                }
+                
+                if (rootUrlUri && !rootUrlUri.is("absolute")) { // "http://", "https://", "data:", etc.
+
+                    var opdsURLAbsolute_ = opdsURLAbsolute;
+                    if (xOriginProxy) {
+                        if (isExternalLink) {
+                            console.log("Removing CORS proxy from URL: " + opdsURLAbsolute_);
+                            opdsURLAbsolute_ = opdsURLAbsolute_.replace(xOriginProxy + "/", "");
+                        } else {
+                            opdsURLAbsolute_ = opdsURLAbsolute_.replace(CORS_PROXY_HTTP_TOKEN, CORS_PROXY_HTTP_TOKEN_ESCAPED);
+                            opdsURLAbsolute_ = opdsURLAbsolute_.replace(CORS_PROXY_HTTPS_TOKEN, CORS_PROXY_HTTPS_TOKEN_ESCAPED);
+                        }
+                    }
+
+                    try {
+                        rootUrl = rootUrlUri.absoluteTo(opdsURLAbsolute_).toString();
+                    } catch(err) {
+                        console.error(err);
+                        console.log(rootUrl);
+                        console.log(opdsURLAbsolute_);
+                    }
+                    
+                    if (xOriginProxy) {
+                        if (!isExternalLink) {
+                            rootUrl = rootUrl.replace(regex_CORS_PROXY_HTTPs_TOKEN_ESCAPED, "/$1://");
+                        }
+                    }
+                    
+                    console.log("OPDS entry URL (absolute): " + rootUrl);
+                    
+                } else if (!isExternalLink) { 
+                    if (xOriginProxy) {
+                        rootUrl = xOriginProxy + "/" + rootUrl;
+                        console.log("Adding CORS proxy to URL: " + rootUrl);
+                    }
+                }
+
+                if (json.length < 50) { // TODO: library view pagination! (better list / grid UI)
+                    json.push({
+                        rootUrl: rootUrl,
+                        title: title,
+                        author: author,
+                        coverHref: coverHref,
+                        
+                        isSubLibraryLink: isSubLibraryLink ? true : undefined,
+                        isExternalLink: isExternalLink ? true : undefined
+                    });
+                }
+            }
+        });
+
+        if (json.length) {
+            dataSuccess(json);
+        } else {
+            dataFail();
+        }
+    };
+    
+    return {
+        tryParse: function(opdsURL, dataSuccess, dataFail) {
+            
+            if (opdsURL.indexOf("opds://") == 0) {
+                opdsURL = opdsURL.replace("opds://", "http://");
+            } else if (opdsURL.indexOf("/opds://") > 0) {
+                opdsURL = opdsURL.replace("/opds://", "/http://");
+            }
+            
+            $.get(opdsURL, function(data){
+                try {
+                    processOPDS(opdsURL, data, dataSuccess, dataFail);
+                } catch(err) {
+                    console.error(err);
+                    dataFail();
+                }
+            }).fail(function(){
+                dataFail();
+            });
+        }
+    };
+});
+define('readium_js_viewer/EpubLibraryManager',['jquery', './ModuleConfig', './PackageParser', './workers/WorkerProxy', 'StorageManager', 'i18nStrings', 'URIjs', './EpubLibraryOPDS'], function ($, moduleConfig, PackageParser, WorkerProxy, StorageManager, Strings, URI, EpubLibraryOPDS) {
+
+    var LibraryManager = function(){
+    };
+
+    var adjustEpubLibraryPath = function(path) {
+
+        if (!path || !moduleConfig.epubLibraryPath) return path;
+
+        var pathUri = undefined;
+        try {
+            pathUri = new URI(path);
+        } catch(err) {
+            console.error(err);
+            console.log(path);
+        }
+        
+        if (pathUri && pathUri.is("absolute")) return path; // "http://", "https://", "data:", etc.
+
+        if (path.indexOf("epub_content/") == 0) {
+            path = path.replace("epub_content/", "");
+        }
+
+        var parts = moduleConfig.epubLibraryPath.split('/');
+        parts.pop();
+
+        var root = parts.join('/');
+        path = root + (path.charAt(0) == '/' ? '' : '/') + path;
+
+        return path;
+    };
+
+    LibraryManager.prototype = {
+
+       _getFullUrl : function(packageUrl, relativeUrl){
+            if (!relativeUrl){
+                return null;
+            }
+
+            var parts = packageUrl.split('/');
+            parts.pop();
+
+            var root = parts.join('/');
+
+            return root + (relativeUrl.charAt(0) == '/' ? '' : '/') + relativeUrl
+        },
+
+        // TODO: see disabled usage in EpubLibrary.js
+        // resetLibraryData: function() {
+        //     this.libraryData = undefined;
+        // },
+
+        retrieveAvailableEpubs : function(success, error){
+            if (this.libraryData){
+                success(this.libraryData);
+                return;
+            }
+
+            var self = this;
+        
+            var indexUrl = moduleConfig.epubLibraryPath
+                        ? StorageManager.getPathUrl(moduleConfig.epubLibraryPath)
+                        : StorageManager.getPathUrl('/epub_library.json');
+
+            var dataFail = function() {
+                console.error("Ebook library fail: " + indexUrl);
+                
+                self.libraryData = [];
+                success([]);
+            };
+            
+            var dataSuccess = function(data) {
+                console.log("Ebook library success: " + indexUrl);
+                
+                if (moduleConfig.epubLibraryPath) {
+                    for (var i = 0; i < data.length; i++) {
+                        data[i].coverHref = adjustEpubLibraryPath(data[i].coverHref);
+                        data[i].rootUrl = adjustEpubLibraryPath(data[i].rootUrl);
+                    }
+                }
+                
+                self.libraryData = data;
+                success(data);
+            };
+
+            if (/\.json$/.test(indexUrl)) {
+                
+                $.getJSON(indexUrl, function(data){
+                    dataSuccess(data);
+                }).fail(function(){
+                    dataFail();
+                });
+            } else {
+                EpubLibraryOPDS.tryParse(indexUrl, dataSuccess, dataFail);
+            }
+        },
+
+        deleteEpubWithId : function(id, success, error){
+            WorkerProxy.deleteEpub(id, this.libraryData, {
+                success: this._refreshLibraryFromWorker.bind(this, success),
+                error: error
+            });
+        },
+        retrieveFullEpubDetails : function(packageUrl, rootUrl, rootDir, noCoverBackground, success, error){
+            var self = this;
+
+            $.get(packageUrl, function(data){
+    
+                if(typeof(data) === "string" ) {
+                    var parser = new window.DOMParser;
+                    data = parser.parseFromString(data, 'text/xml');
+                }
+                var jsonObj = PackageParser.parsePackageDom(data, packageUrl);
+                jsonObj.coverHref = jsonObj.coverHref ? self._getFullUrl(packageUrl, jsonObj.coverHref) : undefined;
+                jsonObj.packageUrl = packageUrl;
+                jsonObj.rootDir = rootDir;
+                jsonObj.rootUrl = rootUrl;
+                jsonObj.noCoverBackground = noCoverBackground;
+    
+                success(jsonObj);
+
+            }).fail(error);
+        },
+        _refreshLibraryFromWorker : function(callback, newLibraryData){
+            this.libraryData = newLibraryData;
+            callback();
+        },
+        handleZippedEpub : function(options){
+            WorkerProxy.importZip(options.file, this.libraryData, {
+                progress : options.progress,
+                overwrite: options.overwrite,
+                success: this._refreshLibraryFromWorker.bind(this, options.success),
+                error : options.error
+            });
+            //Dialogs.showModalProgress()
+            //unzipper.extractAll();
+        },
+        handleDirectoryImport : function(options){
+
+            var rawFiles = options.files,
+                files = {};
+            for (var i = 0; i < rawFiles.length; i++){
+                 var path = rawFiles[i].webkitRelativePath
+                // don't capture paths that contain . at the beginning of a file or dir.
+                // These are hidden files. I don't think chrome will ever reference
+                // a file using double dot "/.." so this should be safe
+                if (path.indexOf('/.') != -1){
+                    continue;
+                }
+                var parts = path.split('/');
+
+                parts.shift();
+                var shiftPath = parts.join('/');
+
+                files[shiftPath] = rawFiles[i];
+            }
+
+            WorkerProxy.importDirectory(files, this.libraryData, {
+                progress : options.progress,
+                overwrite: options.overwrite,
+                success: this._refreshLibraryFromWorker.bind(this, options.success),
+                error : options.error
+            });
+        },
+        handleUrlImport : function(options){
+            WorkerProxy.importUrl(options.url, this.libraryData, {
+                progress : options.progress,
+                overwrite: options.overwrite,
+                success: this._refreshLibraryFromWorker.bind(this, options.success),
+                error : options.error
+
+            });
+        },
+        handleMigration : function(options){
+            WorkerProxy.migrateOldBooks({
+                progress : options.progress,
+                success: this._refreshLibraryFromWorker.bind(this, options.success),
+                error : options.error
+            });
+        },
+        handleUrl : function(options){
+
+        },
+        canHandleUrl : function(){
+            return moduleConfig.canHandleUrl;
+        },
+        canHandleDirectory : function(){
+            return moduleConfig.canHandleDirectory;
+        }
+    }
+
+    window.cleanEntireLibrary = function(){
+        StorageManager.deleteFile('/', function(){
+            console.log('done');
+        }, console.error);
+    }
+    return new LibraryManager();
 
 });
 
@@ -65409,6 +65964,36 @@ if (typeof define === 'function' && define.amd) {
 ;
 define('hgn',{load: function(id){throw new Error("Dynamic load not allowed: " + id);}});
 
+define("hgn!readium_js_viewer_html_templates/library-navbar.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"btn-group navbar-left\">");t.b("\n" + i);t.b("    <button id=\"aboutButt1\" tabindex=\"1\" type=\"button\" class=\"btn icon-logo\" data-toggle=\"modal\" data-target=\"#about-dialog\" title=\"");t.b(t.v(t.d("strings.about",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.about",c,p,0)));t.b("\"></button>");t.b("\n" + i);t.b("</div>");t.b("\n" + i);t.b("<div class=\"btn-group navbar-right\">");t.b("\n" + i);t.b("    <button tabindex=\"1\" type=\"button\" class=\"btn icon-thumbnails\" title=\"");t.b(t.v(t.d("strings.thumbnail_view",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.thumbnail_view",c,p,0)));t.b("\">");t.b("\n" + i);t.b("        <span class=\"glyphicon glyphicon-th\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("    </button>");t.b("\n" + i);t.b("    <button tabindex=\"1\" type=\"button\" class=\"btn icon-list-view\" title=\"");t.b(t.v(t.d("strings.list_view",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.list_view",c,p,0)));t.b("\">");t.b("\n" + i);t.b("        <span class=\"glyphicon glyphicon-align-justify\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("    </button>");t.b("\n" + i);t.b("    <button id=\"addbutt\" tabindex=\"1\" type=\"button\" class=\"btn icon-add-epub\" title=\"");t.b(t.v(t.d("strings.i18n_add_book",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_add_book",c,p,0)));t.b("\" data-toggle=\"modal\" data-target=\"#add-epub-dialog\">");t.b("\n" + i);t.b("        <span class=\"glyphicon glyphicon-plus\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("    </button>");t.b("\n" + i);t.b("    <button id=\"settbutt1\" tabindex=\"1\" type=\"button\" class=\"btn icon-settings\" title=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.ShowSettingsModal",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.ShowSettingsModal",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.ShowSettingsModal",c,p,0)));t.b("\" data-toggle=\"modal\" data-target=\"#settings-dialog\">");t.b("\n" + i);t.b("        <span class=\"glyphicon glyphicon-cog\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("    </button>");t.b("\n" + i);t.b("</div>");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/library-body.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"row library-items\" role=\"main\">");t.b("\n" + i);t.b("</div>");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/empty-library.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"pull-right\">");t.b("\n" + i);t.b("    <div id=\"empty-message\">");t.b("\n" + i);t.b("        ");t.b(t.v(t.d("strings.i18n_add_items",c,p,0)));t.b("\n" + i);t.b("    </div>");t.b("\n" + i);t.b("    <img id=\"empty-message-arrow\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/library_arrow.png\" alt=\"\">");t.b("\n" + i);t.b("</div>");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/library-item.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"col-xs-4 col-sm-3 col-md-2 library-item\">");t.b("\n" + i);t.b("    <div class='info-wrap'>");t.b("\n" + i);t.b("        <!-- <div class='caption book-info'>");t.b("\n" + i);t.b("            <h4 class='title'>");t.b(t.v(t.d("epub.title",c,p,0)));t.b("</h4>");t.b("\n" + i);t.b("            <div class='author'>");t.b(t.v(t.d("epub.author",c,p,0)));if(!t.s(t.d("epub.author",c,p,1),c,p,1,0,0,"")){t.b("No Author Listed");};t.b("</div>");t.b("\n" + i);t.b("        </div> -->");t.b("\n");t.b("\n" + i);t.b("        <button type=\"button\" style=\"background: none; border: none; padding: 0; margin: 0;\" class=\"read\"");t.b("\n" + i);t.b("        ");t.b("\n" + i);if(t.s(t.d("epub.isSubLibraryLink",c,p,1),c,p,0,451,518,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("        ");t.b("\n" + i);t.b("        data-library=\"");t.b(t.v(t.d("epub.rootUrl",c,p,0)));t.b("\"");t.b("\n" + i);t.b("        ");t.b("\n" + i);});c.pop();}t.b("\n" + i);if(!t.s(t.d("epub.isSubLibraryLink",c,p,1),c,p,1,0,0,"")){t.b("            ");t.b("\n" + i);if(t.s(t.d("epub.isExternalLink",c,p,1),c,p,0,630,710,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("            ");t.b("\n" + i);t.b("            data-link=\"");t.b(t.v(t.d("epub.rootUrl",c,p,0)));t.b("\"");t.b("\n" + i);t.b("            ");t.b("\n" + i);});c.pop();}t.b("    ");t.b("\n" + i);if(!t.s(t.d("epub.isExternalLink",c,p,1),c,p,1,0,0,"")){t.b("            ");t.b("\n" + i);t.b("            data-book=\"");t.b(t.v(t.d("epub.rootUrl",c,p,0)));t.b("\"");t.b("\n" + i);t.b("            ");t.b("\n" + i);};t.b("        ");t.b("\n" + i);};t.b("        ");t.b("\n" + i);t.b("        aria-label=\"(");t.b(t.v(t.d("count.n",c,p,0)));t.b(") ");t.b(t.v(t.d("epub.title",c,p,0)));t.b("\" title=\"(");t.b(t.v(t.d("count.n",c,p,0)));t.b(") ");t.b(t.v(t.d("epub.title",c,p,0)));t.b("\"  tabindex=\"");t.b(t.v(t.d("count.tabindex",c,p,0)));t.b("\">");t.b("\n");t.b("\n" + i);if(t.s(t.d("epub.coverHref",c,p,1),c,p,0,1081,1221,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("        <div aria-hidden=\"true\" class=\"no-cover has-cover\" style=\"background-image:url(");t.b(t.v(t.d("epub.coverHref",c,p,0)));t.b(");\"><p>&nbsp;</p></div>");t.b("\n" + i);});c.pop();}t.b("\n" + i);if(!t.s(t.d("epub.coverHref",c,p,1),c,p,1,0,0,"")){t.b("        <div aria-hidden=\"true\" class=\"no-cover\" style=\"background-image: url('");t.b(t.v(t.f("noCoverBackground",c,p,0)));t.b("')\"><p>");t.b(t.v(t.d("epub.title",c,p,0)));t.b("</p></div>");t.b("\n" + i);};t.b("    </button>");t.b("\n" + i);t.b("    </div>");t.b("\n");t.b("\n" + i);t.b("    <!-- <div class=\"caption buttons\">");t.b("\n" + i);t.b("        <a href=\"#\" class=\"btn btn-default read\" data-book=\"");t.b(t.v(t.d("epub.packageUrl",c,p,0)));t.b("\" role=\"button\">");t.b(t.v(t.d("strings.i18n_read",c,p,0)));t.b("</a>");t.b("\n" + i);t.b("        <a href=\"#details-modal\" data-book=\"");t.b(t.v(t.d("epub.packageUrl",c,p,0)));t.b("\" aria-pressed=\"true\" class=\"btn btn-default details\" data-toggle=\"modal\" role=\"button\">");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b("</a>");t.b("\n" + i);t.b("    </div> -->");t.b("\n" + i);t.b("    <div class='caption book-info'>");t.b("\n" + i);t.b("        <h4 class='title' title=\"");t.b(t.v(t.d("epub.title",c,p,0)));t.b("\">");t.b(t.v(t.d("epub.title",c,p,0)));t.b("</h4>");t.b("\n" + i);t.b("        <div class='author' title=\"");t.b(t.v(t.d("epub.author",c,p,0)));t.b("\">");t.b(t.v(t.d("epub.author",c,p,0)));if(!t.s(t.d("epub.author",c,p,1),c,p,1,0,0,"")){t.b("No Author Listed");};t.b("</div>");t.b("\n");t.b("\n" + i);if(!t.s(t.d("epub.isSubLibraryLink",c,p,1),c,p,1,0,0,"")){t.b("            ");t.b("\n" + i);if(!t.s(t.d("epub.isExternalLink",c,p,1),c,p,1,0,0,"")){t.b("                    ");t.b("\n" + i);t.b("                <div class=\"buttons\">");t.b("\n" + i);t.b("        ");t.b("\n" + i);t.b("                <button aria-label=\"");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b(" (");t.b(t.v(t.d("count.n",c,p,0)));t.b(") ");t.b(t.v(t.d("epub.title",c,p,0)));t.b("\" title=\"");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b(" (");t.b(t.v(t.d("count.n",c,p,0)));t.b(") ");t.b(t.v(t.d("epub.title",c,p,0)));t.b("\" tabindex=\"");t.b(t.v(t.d("count.tabindex",c,p,0)));t.b("\" data-toggle=\"modal\" data-target=\"#details-modal\" data-package=\"");t.b(t.v(t.d("epub.rootUrl",c,p,0)));t.b("/");t.b(t.v(t.d("epub.packagePath",c,p,0)));t.b("\" data-root=\"");t.b(t.v(t.d("epub.rootUrl",c,p,0)));t.b("\" data-root-dir=\"");t.b(t.v(t.d("epub.rootDir",c,p,0)));t.b("\" ");if(!t.s(t.d("epub.coverHref",c,p,1),c,p,1,0,0,"")){t.b(" data-no-cover=\"");t.b(t.v(t.f("noCoverBackground",c,p,0)));t.b("\" ");};t.b(" class=\"btn btn-info details\">");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("                ");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);t.b("                ");t.b("\n" + i);};t.b("        ");t.b("\n" + i);};t.b("    </div>");t.b("\n" + i);t.b("</div>");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/details-dialog.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div id=\"details-dialog\" class=\"modal fade details-dialog\" tabindex=\"-1\" role=\"dialog\">");t.b("\n" + i);t.b("  <div class=\"modal-dialog\">");t.b("\n" + i);t.b("    <div class=\"modal-content\">");t.b("\n" + i);t.b("      <div class=\"modal-body\">");t.b("\n" + i);t.b("        <p>Loading Details...</p>");t.b("\n" + i);t.b("        <progress></progress>");t.b("\n" + i);t.b("      </div>");t.b("\n" + i);t.b("    </div><!-- /.modal-content -->");t.b("\n" + i);t.b("  </div><!-- /.modal-dialog -->");t.b("\n" + i);t.b("</div><!-- /.modal -->");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/about-dialog.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"modal fade\" id=\"about-dialog\" tabindex=\"-1\" role=\"dialog\" aria-label=\"");t.b(t.t(t.d("strings.about",c,p,0)));t.b("\" >");t.b("\n" + i);t.b("  <div class=\"modal-dialog\">");t.b("\n" + i);t.b("    <div class=\"modal-content\">");t.b("\n" + i);t.b("      <div class=\"modal-body\">");t.b("\n" + i);t.b("          <div class=\"splash-logo\">");t.b("\n" + i);t.b("              <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/about_readium_logo.png\" alt=\"\">");t.b("\n" + i);t.b("          </div>");t.b("\n");t.b("\n" + i);t.b("          <div class=\"about-message\">");t.b("\n" + i);t.b("              <span>");t.b(t.t(t.d("strings.i18n_html_readium_tm_a_project",c,p,0)));t.b("</span>");t.b("\n" + i);t.b("          </div>");t.b("\n" + i);t.b("          <div>");t.b("\n" + i);t.b("                 <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/partner_logos.png\" alt=\"");t.b(t.t(t.d("strings.i18n_alt_about_logos",c,p,0)));t.b("\">");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("        <h4 style=\"color:#111155\">");t.b(t.t(t.d("strings.gethelp",c,p,0)));t.b("</h4>");t.b("\n" + i);t.b("        <div class=\"version\">");t.b(t.v(t.d("viewerJs.chromeVersion",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class=\"build-date\">");t.b(t.v(t.f("dateTimeString",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class=\"version-details\">");t.b("\n" + i);t.b("            ");t.b("\n" + i);t.b("          <div><a target=\"_blank\" href=\"https://github.com/readium/readium-js-viewer/tree/");t.b(t.v(t.d("viewerJs.sha",c,p,0)));t.b("\">readium-js-viewer@");t.b(t.v(t.d("viewerJs.sha",c,p,0)));t.b("</a>");if(!t.s(t.d("viewerJs.clean",c,p,1),c,p,1,0,0,"")){t.b("<span class=\"local-changes-alert\"> (");t.b(t.t(t.d("strings.gitHasLocalChanges",c,p,0)));t.b(")</span>");};t.b("</div>");t.b("\n" + i);t.b("          ");t.b("\n" + i);t.b("          <div><a target=\"_blank\" href=\"https://github.com/readium/readium-js/tree/");t.b(t.v(t.d("readiumJs.sha",c,p,0)));t.b("\">readium-js@");t.b(t.v(t.d("readiumJs.sha",c,p,0)));t.b("</a>");if(!t.s(t.d("readiumJs.clean",c,p,1),c,p,1,0,0,"")){t.b("<span class=\"local-changes-alert\"> (");t.b(t.t(t.d("strings.gitHasLocalChanges",c,p,0)));t.b(")</span>");};t.b("</div>");t.b("\n" + i);t.b("          ");t.b("\n" + i);t.b("          <div><a target=\"_blank\" href=\"https://github.com/readium/readium-shared-js/tree/");t.b(t.v(t.d("sharedJs.sha",c,p,0)));t.b("\">readium-shared-js@");t.b(t.v(t.d("sharedJs.sha",c,p,0)));t.b("</a>");if(!t.s(t.d("sharedJs.clean",c,p,1),c,p,1,0,0,"")){t.b("<span class=\"local-changes-alert\"> (");t.b(t.t(t.d("strings.gitHasLocalChanges",c,p,0)));t.b(")</span>");};t.b("</div>");t.b("\n");t.b("\n" + i);t.b("        </div>");t.b("\n" + i);t.b("      </div>");t.b("\n" + i);t.b("    </div><!-- /.modal-content -->");t.b("\n" + i);t.b("  </div><!-- /.modal-dialog -->");t.b("\n" + i);t.b("</div><!-- /.modal -->");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/details-body.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("\n" + i);t.b("<!-- div class=\"modal-header\">");t.b("\n");t.b("\n" + i);t.b("    <button id=\"closeEpubDetailsCross\" type=\"button\" class=\"close\" data-dismiss=\"modal\"  tabindex=\"999\" title=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b("\"><span aria-hidden=\"true\">&times;</span></button>");t.b("\n" + i);t.b("    ");t.b("\n" + i);t.b("    <h4 class=\"modal-title\" id=\"epub-details-label\">HEADER</h4>");t.b("\n" + i);t.b("</div -->");t.b("\n" + i);t.b("<div class=\"details-body\">");t.b("\n" + i);t.b("    ");t.b("\n" + i);t.b("    <button id=\"closeEpubDetailsCross\" type=\"button\" class=\"close\" data-dismiss=\"modal\"  tabindex=\"999\" title=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_details",c,p,0)));t.b("\"><span aria-hidden=\"true\">&times;</span></button>");t.b("\n" + i);t.b("    ");t.b("\n" + i);t.b("    <div class=\"offscreenText\">Details Start</div>");t.b("\n" + i);t.b("    <div class=\"modal-cover-wrap\">");t.b("\n" + i);if(t.s(t.d("data.coverHref",c,p,1),c,p,0,802,912,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("        <img class=\"details-cover-image img-responsive\" src=\"");t.b(t.v(t.d("data.coverHref",c,p,0)));t.b("\" alt=\"ePUB cover\">");t.b("\n" + i);});c.pop();}if(!t.s(t.d("data.coverHref",c,p,1),c,p,1,0,0,"")){t.b("        <div class=\"no-cover\" style=\"background-image: url('");t.b(t.v(t.d("data.noCoverBackground",c,p,0)));t.b("')\"><p>");t.b(t.v(t.d("data.title",c,p,0)));t.b("</p></div>");t.b("\n" + i);};t.b("        <div class=\"buttons\">");t.b("\n" + i);t.b("            <button tabindex=\"1000\" class=\"btn btn-default read\" data-dismiss=\"modal\" data-book=\"");t.b(t.v(t.d("data.rootUrl",c,p,0)));t.b("\" type=\"button\">");t.b(t.v(t.d("strings.i18n_read",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("            <button tabindex=\"1000\" class=\"btn btn-danger delete\" data-dismiss=\"modal\" type=\"button\">");t.b(t.v(t.d("strings.i18n_delete",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("        </div>");t.b("\n" + i);t.b("    </div>");t.b("\n" + i);t.b("    <div class='modal-book-info'>");t.b("\n" + i);t.b("        <h3 class='modal-title'>");t.b(t.v(t.d("data.title",c,p,0)));t.b("</h3>");t.b("\n" + i);t.b("        <div class='modal-detail'>");t.b(t.v(t.d("strings.i18n_author",c,p,0)));t.b(t.v(t.d("data.author",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class='modal-detail'>");t.b(t.v(t.d("strings.i18n_publisher",c,p,0)));t.b(t.v(t.d("data.publisher",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class='modal-detail'>");t.b(t.v(t.d("strings.i18n_pub_date",c,p,0)));t.b(t.v(t.d("data.pubdate",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class='modal-detail'>");t.b(t.v(t.d("strings.i18n_modified_date",c,p,0)));t.b(t.v(t.d("data.modified_date",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class='modal-detail'>");t.b(t.v(t.d("strings.i18n_id",c,p,0)));t.b(t.v(t.d("data.id",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class='modal-detail'>");t.b(t.v(t.d("strings.i18n_epub_version",c,p,0)));t.b(t.v(t.d("data.epub_version",c,p,0)));t.b("</div>        ");t.b("\n" + i);t.b("    </div>");t.b("\n");t.b("\n" + i);t.b("    <div class=\"offscreenText\">Details End</div>");t.b("\n" + i);t.b("</div>");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/add-epub-dialog.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"modal fade\" id=\"add-epub-dialog\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"add-epub-label\">");t.b("\n" + i);t.b("    <div class=\"modal-dialog\">");t.b("\n" + i);t.b("        <div class=\"modal-content\">");t.b("\n" + i);t.b("            <div class=\"modal-header\">");t.b("\n");t.b("\n" + i);t.b("                <button id=\"closeAddEpubCross\" type=\"button\" class=\"close\" data-dismiss=\"modal\" tabindex=\"999\" title=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_add_book",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_add_book",c,p,0)));t.b("\"><span aria-hidden=\"true\">&times;</span></button>");t.b("\n");t.b("\n" + i);t.b("                <h4 class=\"modal-title\" id=\"add-epub-label\">");t.b(t.v(t.d("strings.i18n_add_book",c,p,0)));t.b("</h4>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <div class=\"modal-body\">");t.b("\n" + i);t.b("                <form class=\"form-horizontal\" role=\"form\">");t.b("\n" + i);if(t.s(t.f("canHandleUrl",c,p,1),c,p,0,733,1153,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("                <div class=\"form-group\">");t.b("\n" + i);t.b("                    <label id=\"add1\" class=\"control-label col-sm-5\">");t.b(t.v(t.d("strings.i18n_from_the_web",c,p,0)));t.b("</label>");t.b("\n" + i);t.b("                    <div class=\"col-sm-7\">");t.b("\n" + i);t.b("                        <input tabindex=\"1000\" type=\"text\" id=\"url-upload\" class=\"form-control\" placeholder=\"");t.b(t.v(t.d("strings.i18n_enter_a_url",c,p,0)));t.b("\" aria-labelledby=\"add1\">");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);});c.pop();}t.b("                <div id=\"epub-upload-div\" class=\"form-group\">");t.b("\n" + i);t.b("                    <label id=\"add2\" class=\"control-label col-sm-5\">");t.b(t.v(t.d("strings.i18n_from_local_file",c,p,0)));t.b("</label>");t.b("\n" + i);t.b("                    <div class=\"col-sm-7\">");t.b("\n" + i);t.b("                        <input tabindex=\"1000\" type=\"file\" multiple=\"multiple\" id=\"epub-upload\" class=\"form-control\" aria-labelledby=\"add2\">");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);if(t.s(t.f("canHandleDirectory",c,p,1),c,p,0,1615,2046,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("                <div class=\"form-group\">");t.b("\n" + i);t.b("                    <label id=\"add3\" class=\"control-label col-sm-5\">");t.b(t.v(t.d("strings.i18n_unpacked_directory",c,p,0)));t.b("</label>");t.b("\n" + i);t.b("                    <div class=\"col-sm-7\">");t.b("\n" + i);t.b("                        <input tabindex=\"1000\" type=\"file\" id=\"dir-upload\" webkitdirectory=\"\" mozdirectory=\"\" directory=\"\" class=\"form-control\" aria-labelledby=\"add3\">");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);});c.pop();}t.b("                </form>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <div class=\"modal-footer\">");t.b("\n" + i);t.b("                <button tabindex=\"1000\" type=\"button\" class=\"btn btn-default add-book\" data-dismiss=\"modal\" disabled=\"disabled\" style=\"display:none;\">");t.b(t.v(t.d("strings.i18n_add_book",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("                ");t.b("\n" + i);t.b("                <button tabindex=\"1000\" type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\">");t.b(t.v(t.d("strings.i18n_cancel",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("        </div>");t.b("\n" + i);t.b("        <!-- /.modal-content --> ");t.b("\n" + i);t.b("    </div><!-- /.modal-dialog -->");t.b("\n" + i);t.b("</div>");t.b("\n" + i);t.b("<!-- /.modal -->");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/settings-dialog.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div tabindex=\"-1\" class=\"modal fade\" id=\"settings-dialog\" role=\"dialog\" aria-label=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("\">");t.b("\n" + i);t.b("    <div class=\"modal-dialog\">");t.b("\n" + i);t.b("        <div class=\"modal-content\">");t.b("\n");t.b("\n" + i);t.b("           <!-- div class=\"modal-header\">");t.b("\n" + i);t.b("            <h4 class=\"modal-title\" id=\"settings-label\">");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("</h4>");t.b("\n" + i);t.b("           </div -->");t.b("\n");t.b("\n" + i);t.b("            <div class=\"modal-body\">");t.b("\n" + i);t.b("           <button type=\"button\" class=\"close\" id=\"closeSettingsCross\" data-dismiss=\"modal\" title=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("\"><span aria-hidden=\"true\">&times;</span></button>");t.b("\n");t.b("\n" + i);t.b("           <ul class=\"nav nav-tabs\" role=\"tablist\" aria-owns=\"tab-butt-style tab-butt-layout tab-butt-keys\">");t.b("\n" + i);t.b("             <li class=\"active\" role=\"presentation\"><button id=\"tab-butt-style\"  title=\"");t.b(t.v(t.d("strings.style",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.style",c,p,0)));t.b("\" role='tab' aria-controls=\"tab-style\" data-toggle=\"tab\" data-target=\"#tab-style\" tabindex=\"0\">");t.b(t.v(t.d("strings.style",c,p,0)));t.b("</button></li>");t.b("\n" + i);t.b("             <li role=\"presentation\"><button id=\"tab-butt-layout\"  title=\"");t.b(t.v(t.d("strings.layout",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.layout",c,p,0)));t.b("\" role='tab' aria-controls=\"tab-layout\" data-toggle=\"tab\" data-target=\"#tab-layout\" tabindex=\"-1\">");t.b(t.v(t.d("strings.layout",c,p,0)));t.b("</button></li>");t.b("\n" + i);t.b("             <li role=\"presentation\"><button id=\"tab-butt-keys\"  title=\"");t.b(t.v(t.d("strings.i18n_keyboard_shortcuts",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_keyboard_shortcuts",c,p,0)));t.b("\" role='tab' aria-controls=\"tab-keyboard\" data-toggle=\"tab\" data-target=\"#tab-keyboard\" tabindex=\"-1\">");t.b(t.v(t.d("strings.i18n_keyboard_shortcuts",c,p,0)));t.b("</button></li>");t.b("\n" + i);t.b("           </ul>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("           <div class=\"tab-content\">");t.b("\n" + i);t.b("                <div id=\"tab-style\" class=\"tab-pane active\" role=\"tabpanel\" aria-expanded=\"true\">");t.b("\n" + i);t.b("                <h5 aria-hidden=\"true\">");t.b(t.v(t.d("strings.preview",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                <div  aria-hidden=\"true\" class=\"row\">");t.b("\n" + i);t.b("                    <div data-theme=\"author-theme\" class=\"col-xs-10 col-xs-offset-1 preview-text author-theme\">");t.b("\n" + i);t.b("                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus neque dui, congue a suscipit non, feugiat eu urna. Cras in felis sed orci aliquam sagittis.");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                </div>");t.b("\n");t.b("\n" + i);t.b("<!-- button  type=\"button\" title=\"TESTING\" aria-label=\"TESTING\">TESTING DANIEL</button -->");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-font-size\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_font_size",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-2 icon-scale-down\">");t.b("\n" + i);t.b("                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/glyphicons_115_text_smaller.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-8\">");t.b("\n" + i);t.b("                            <input  type=\"range\" aria-labelledby=\"setting-header-font-size\" id=\"font-size-input\" min=\"60\" aria-value-min=\"60\" aria-valuemin=\"60\" step=\"10\" max=\"170\" aria-value-max=\"170\" aria-valuemax=\"170\" value=\"100\" aria-valuenow=\"100\" aria-value-now=\"100\" aria-valuetext=\"1em\" aria-value-text=\"1em\" title=\"");t.b(t.v(t.d("strings.i18n_font_size",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_font_size",c,p,0)));t.b("\" />");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-2\">");t.b("\n" + i);t.b("                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/glyphicons_116_text_bigger.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-font-selection\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_font_selection",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-8 col-xs-offset-2\">");t.b("\n" + i);t.b("                            <select style=\"width: 100%; padding: 0.5em;\" aria-labelledby=\"setting-header-font-selection\" id=\"font-selection-input\"  title=\"");t.b(t.v(t.d("strings.i18n_font_selection",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_font_selection",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                                <option value=\"0\" aria-label=\"");t.b(t.v(t.d("strings.i18n_fonttype_default",c,p,0)));t.b("\" title=\"");t.b(t.v(t.d("strings.i18n_fonttype_default",c,p,0)));t.b("\">");t.b(t.v(t.d("strings.i18n_fonttype_default",c,p,0)));t.b("</option>");t.b("\n" + i);t.b("							</select>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-color-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_text_and_background_color",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div role=\"group\" aria-labelledby=\"setting-header-color-legend\" id=\"theme-radio-group\" class=\"row\">");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"author-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_author_theme",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_author_theme",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option author-theme clickable\">");t.b(t.v(t.d("strings.i18n_author_theme",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"default-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_black_and_white",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_black_and_white",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option default-theme clickable\">");t.b(t.v(t.d("strings.i18n_black_and_white",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"night-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_arabian_nights",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_arabian_nights",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("]\" class=\"col-xs-8 col-xs-offset-2 theme-option night-theme clickable\" >");t.b(t.v(t.d("strings.i18n_arabian_nights",c,p,0)));t.b("</button> <!-- accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.NightTheme",c,p,0)));t.b("\" -->");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"parchment-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_sands_of_dune",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_sands_of_dune",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option parchment-theme clickable\">");t.b(t.v(t.d("strings.i18n_sands_of_dune",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"ballard-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_ballard_blues",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_ballard_blues",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option ballard-theme clickable\">");t.b(t.v(t.d("strings.i18n_ballard_blues",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"vancouver-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_vancouver_mist",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_vancouver_mist",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option vancouver-theme clickable\">");t.b(t.v(t.d("strings.i18n_vancouver_mist",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);t.b("                <div id=\"tab-layout\" class=\"tab-pane\" role=\"tabpanel\">");t.b("\n");t.b("\n" + i);t.b("                    <!-- disabled: replaced with setting-header-column-max-width-legend (see below) -->");t.b("\n" + i);t.b("                    <h5 style=\"display:none;\" id=\"setting-header-margins-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_margins",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div style=\"display:none;\" class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-2 icon-scale-down\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin1_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-8\">");t.b("\n" + i);t.b("                            <input  type=\"range\" role=\"slider\" aria-labelledby=\"setting-header-margins-legend\" id=\"margin-size-input\" min=\"20\" aria-value-min=\"20\" aria-valuemin=\"20\" step=\"20\" max=\"100\" aria-value-max=\"100\" aria-valuemax=\"100\" value=\"20\" aria-valuenow=\"20\" aria-value-now=\"20\" aria-valuetext=\"20\" aria-value-text=\"20\" title=\"");t.b(t.v(t.d("strings.i18n_margins",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_margins",c,p,0)));t.b("\"/>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-2\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin4_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                    ");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-column-max-width-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_pageMaxWidth",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                     <div class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-2\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin4_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-8\">");t.b("\n" + i);t.b("                            <input  type=\"range\" role=\"slider\" aria-labelledby=\"setting-header-column-max-width-legend\" id=\"column-max-width-input\" min=\"500\" aria-value-min=\"500\" aria-valuemin=\"500\" step=\"50\" max=\"2000\" aria-value-max=\"2000\" aria-valuemax=\"2000\" value=\"700\" aria-valuenow=\"700\" aria-value-now=\"700\" aria-valuetext=\"700\" aria-value-text=\"700\" title=\"");t.b(t.v(t.d("strings.i18n_pageMaxWidth",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_pageMaxWidth",c,p,0)));t.b("\"/>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-2 icon-scale-down\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin1_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-display-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_display_format",c,p,0)));t.b("</h5>");t.b("\n");t.b("\n" + i);t.b("                    <div role=\"radiogroup\" class=\"row\" style=\"width:100%;text-align:center;\" aria-labelledby=\"setting-header-display-legend\">");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"spread-default-option\"");t.b("\n" + i);t.b("                        style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"display-format\" value=\"single\" type=\"radio\" id=\"spread-default-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"spread-default-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_spread_auto",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"one-up-option\"");t.b("\n" + i);t.b("                        style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n");t.b("\n" + i);t.b("                            <input  name=\"display-format\" value=\"single\" type=\"radio\" id=\"single-page-radio\" />");t.b("\n" + i);t.b("                                            <label for=\"single-page-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/ico_singlepage_up.png\" alt=\"");t.b(t.v(t.d("strings.i18n_display_format",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_single_pages",c,p,0)));t.b("\"/>");t.b("\n" + i);t.b("                                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"two-up-option\"");t.b("\n" + i);t.b("                        style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n");t.b("\n" + i);t.b("                                <input  name=\"display-format\" value=\"double\" type=\"radio\" id=\"double-page-radio\" />");t.b("\n" + i);t.b("                                            <label for=\"double-page-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/ico_doublepage_up.png\" alt=\"");t.b(t.v(t.d("strings.i18n_display_format",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_double_pages",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-scroll-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_scroll_mode",c,p,0)));t.b("</h5>");t.b("\n");t.b("\n" + i);t.b("                    <div role=\"radiogroup\" class=\"row\" style=\"width:100%;text-align:center;\" aria-labelledby=\"setting-header-scroll-legend\">");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"scroll-default-option\" style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"scrolling\" value=\"single\" type=\"radio\" id=\"scroll-default-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"scroll-default-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_scroll_mode_auto",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"scroll-doc-option\" style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"scrolling\" value=\"single\" type=\"radio\" id=\"scroll-doc-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"scroll-doc-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                <span style=\"font-size:150%;color:#888888;\" class=\"glyphicon glyphicon-file\" aria-hidden=\"true\"></span> ");t.b(t.v(t.d("strings.i18n_scroll_mode_doc",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"scroll-continuous-option\" style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"scrolling\" value=\"single\" type=\"radio\" id=\"scroll-continuous-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"scroll-continuous-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                <span style=\"font-size:150%;color:#888888;\" class=\"glyphicon glyphicon-road\" aria-hidden=\"true\"></span> ");t.b(t.v(t.d("strings.i18n_scroll_mode_continuous",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <!-- Page transitions are seriously broken (see readium-shared-js one_page_view.js disablePageTransitions boolean), so we hide the UI config options -->");t.b("\n" + i);t.b("                    <h5 style=\"display:none;\" hiddenx=\"hidden\" id=\"setting-header-pageTransition-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_page_transition",c,p,0)));t.b("</h5>");t.b("\n");t.b("\n" + i);t.b("                    <div style=\"display:none; width:100%;text-align:center;\" hiddenx=\"hidden\" role=\"radiogroup\" class=\"row\" aria-labelledby=\"setting-header-pageTransition-legend\">");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-none-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-none-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-none-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_none",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-1-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-1-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-1-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_fade",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-2-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-2-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-2-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_slide",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-3-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-3-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-3-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_swoosh",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-4-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-4-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-4-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_butterfly",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                    <div id=\"tab-keyboard\" class=\"tab-pane\" role=\"tabpanel\">");t.b("\n");t.b("\n" + i);t.b("                    <div class=\"row\" style=\"position:relative;\">");t.b("\n");t.b("\n" + i);t.b("                        <div id=\"invalid_keyboard_shortcut_ALERT\"></div>");t.b("\n");t.b("\n" + i);t.b("                        <ul id=\"keyboard-list\">");t.b("\n" + i);t.b("                        </ul>");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                     </div>");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <div class=\"modal-footer\">");t.b("\n" + i);t.b("                <button id=\"buttClose\"  type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\" title=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalClose",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalClose",c,p,0)));t.b("]\">");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("                <button id=\"buttSave\"  type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\" title=\"");t.b(t.v(t.d("strings.i18n_save_changes",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalSave",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_save_changes",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalSave",c,p,0)));t.b("]\">");t.b(t.v(t.d("strings.i18n_save_changes",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("        </div>");t.b("\n" + i);t.b("        <!-- /.modal-content -->");t.b("\n" + i);t.b("    </div>");t.b("\n" + i);t.b("    <!-- /.modal-dialog -->");t.b("\n" + i);t.b("</div>");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
+define("hgn!readium_js_viewer_html_templates/settings-keyboard-item.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");if(t.s(t.f("name",c,p,1),c,p,0,9,739,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<li>");t.b("\n" + i);t.b("<label id=\"label_");t.b(t.v(t.f("name",c,p,0)));t.b("\">");t.b(t.v(t.f("i18n",c,p,0)));t.b("<br/><span>");t.b(t.v(t.f("name",c,p,0)));t.b("</span></label>");t.b("\n" + i);t.b("<input id=\"");t.b(t.v(t.f("name",c,p,0)));t.b("\" name=\"");t.b(t.v(t.f("name",c,p,0)));t.b("\" class=\"keyboardInput\" type=\"text\"  placeholder=\"");t.b(t.v(t.f("shortcut",c,p,0)));t.b("\" value=\"");t.b(t.v(t.f("shortcut",c,p,0)));t.b("\" aria-labelledbyxxx=\"label_");t.b(t.v(t.f("name",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.f("i18n",c,p,0)));t.b("\" title=\"");t.b(t.v(t.f("i18n",c,p,0)));t.b("\"></input>");t.b("\n" + i);t.b("<button class=\"resetKey captureKeyboardShortcut\" role=\"button\" data-key=\"");t.b(t.v(t.f("name",c,p,0)));t.b("\"  title=\"");t.b(t.v(t.d("strings.i18n_reset_key",c,p,0)));t.b(" (");t.b(t.v(t.f("def",c,p,0)));t.b(")\" aria-label=\"");t.b(t.v(t.d("strings.i18n_reset_key",c,p,0)));t.b(" (");t.b(t.v(t.f("def",c,p,0)));t.b(")\"><span aria-hidden=\"true\">&#8855;</span></button>");t.b("\n" + i);t.b("<span id=\"duplicate_keyboard_shortcut\" aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_duplicate_keyboard_shortcut",c,p,0)));t.b("</span>");t.b("\n" + i);t.b("<span id=\"invalid_keyboard_shortcut\" aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_invalid_keyboard_shortcut",c,p,0)));t.b("</span>");t.b("\n" + i);t.b("</li>");t.b("\n" + i);});c.pop();}if(!t.s(t.f("name",c,p,1),c,p,1,0,0,"")){t.b("<li id=\"resetAllKeys");t.b(t.v(t.f("id",c,p,0)));t.b("\" class=\"resetAllKeys\">");t.b("\n" + i);t.b("<button class=\"resetKey\" role=\"button\"  title=\"");t.b(t.v(t.d("strings.i18n_reset_key_all",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_reset_key_all",c,p,0)));t.b("\"><span aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_reset_key_all",c,p,0)));t.b("  &#8855;</span></button>");t.b("\n" + i);t.b("</li>");t.b("\n" + i);};return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+
+
 define("hgn!readium_js_viewer_html_templates/managed-dialog.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"modal fade\" id=\"managed-dialog\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"managed-label\">");t.b("\n" + i);t.b("    <div class=\"modal-dialog\">");t.b("\n" + i);t.b("        <div class=\"modal-content\">");t.b("\n" + i);t.b("            <div class=\"modal-header\">");t.b("\n" + i);t.b("                <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"close\" title=\"close\"><span aria-hidden=\"true\">&times;<span></button>");t.b("\n" + i);t.b("                <h4 class=\"modal-title\" id=\"managed-label\"></h4>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <div class=\"modal-body\">");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <div class=\"modal-footer\">");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("        </div>");t.b("\n" + i);t.b("        <!-- /.modal-content --> ");t.b("\n" + i);t.b("    </div><!-- /.modal-dialog -->");t.b("\n" + i);t.b("</div>");t.b("\n" + i);t.b("<!-- /.modal -->");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
 
 
@@ -65417,42 +66002,6 @@ define("hgn!readium_js_viewer_html_templates/progress-dialog.html", ["hogan"], f
 
 define("hgn!readium_js_viewer_html_templates/managed-buttons.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");if(t.s(t.f("buttons",c,p,1),c,p,0,12,155,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<button type=\"button\" class=\"btn btn-default ");if(t.s(t.f("classes",c,p,1),c,p,0,70,76,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(t.v(t.d(".",c,p,0)));t.b(" ");});c.pop();}t.b("\" ");if(t.s(t.f("dismiss",c,p,1),c,p,0,102,124,"{{ }}")){t.rs(c,p,function(c,p,t){t.b(" data-dismiss=\"modal\" ");});c.pop();}t.b(">");t.b(t.v(t.f("text",c,p,0)));t.b("</button>");t.b("\n" + i);});c.pop();}return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
 
-define('readium_js_viewer/workers/Messages',[],function(){
-    return {
-        // window -> worker messages
-        IMPORT_ZIP : 0,
-        OVERWRITE_CONTINUE : 1,
-        FIND_PACKAGE_RESPONSE: 2,
-        PARSE_PACKAGE_RESPONSE: 3,
-        DELETE_EPUB : 4,
-        IMPORT_DIR : 5,
-        IMPORT_URL: 6,
-        MIGRATE: 7,
-        OVERWRITE_SIDE_BY_SIDE: 8,
-        CONTINUE_IMPORT_ZIP: 9,
-
-        // worker -> window messages
-        SUCCESS : 100,
-        PROGRESS : 101,
-        ERROR : 102,
-        OVERWRITE : 103,
-        FIND_PACKAGE : 104,
-        PARSE_PACKAGE: 105,
-
-
-        PROGRESS_EXTRACTING : 200,
-        PROGRESS_WRITING: 201,
-        PROGRESS_DELETING: 202,
-        PROGRESS_MIGRATING: 203,
-
-        ERROR_STORAGE : 300,
-        ERROR_EPUB : 301,
-        ERROR_AJAX : 302,
-        ERROR_PACKAGE_PARSE: 303,
-        
-        READY: 400
-    }
-});
 define('readium_js_viewer/Dialogs',['hgn!readium_js_viewer_html_templates/managed-dialog.html', 'hgn!readium_js_viewer_html_templates/progress-dialog.html', 'hgn!readium_js_viewer_html_templates/managed-buttons.html', 'i18nStrings', './workers/Messages'], function(ManagedDialog, ProgressDialog, ButtonTemplate, Strings, Messages){
     var $currentModal,
         lastTitle;
@@ -65684,12 +66233,6 @@ define('readium_js_viewer/Dialogs',['hgn!readium_js_viewer_html_templates/manage
 
     return Dialogs;
 });
-
-
-define("hgn!readium_js_viewer_html_templates/settings-dialog.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div tabindex=\"-1\" class=\"modal fade\" id=\"settings-dialog\" role=\"dialog\" aria-label=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("\">");t.b("\n" + i);t.b("    <div class=\"modal-dialog\">");t.b("\n" + i);t.b("        <div class=\"modal-content\">");t.b("\n");t.b("\n" + i);t.b("           <!-- div class=\"modal-header\">");t.b("\n" + i);t.b("            <h4 class=\"modal-title\" id=\"settings-label\">");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("</h4>");t.b("\n" + i);t.b("           </div -->");t.b("\n");t.b("\n" + i);t.b("            <div class=\"modal-body\">");t.b("\n" + i);t.b("           <button type=\"button\" class=\"close\" id=\"closeSettingsCross\" data-dismiss=\"modal\" title=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.settings",c,p,0)));t.b("\"><span aria-hidden=\"true\">&times;</span></button>");t.b("\n");t.b("\n" + i);t.b("           <ul class=\"nav nav-tabs\" role=\"tablist\" aria-owns=\"tab-butt-style tab-butt-layout tab-butt-keys\">");t.b("\n" + i);t.b("             <li class=\"active\" role=\"presentation\"><button id=\"tab-butt-style\"  title=\"");t.b(t.v(t.d("strings.style",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.style",c,p,0)));t.b("\" role='tab' aria-controls=\"tab-style\" data-toggle=\"tab\" data-target=\"#tab-style\" tabindex=\"0\">");t.b(t.v(t.d("strings.style",c,p,0)));t.b("</button></li>");t.b("\n" + i);t.b("             <li role=\"presentation\"><button id=\"tab-butt-layout\"  title=\"");t.b(t.v(t.d("strings.layout",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.layout",c,p,0)));t.b("\" role='tab' aria-controls=\"tab-layout\" data-toggle=\"tab\" data-target=\"#tab-layout\" tabindex=\"-1\">");t.b(t.v(t.d("strings.layout",c,p,0)));t.b("</button></li>");t.b("\n" + i);t.b("             <li role=\"presentation\"><button id=\"tab-butt-keys\"  title=\"");t.b(t.v(t.d("strings.i18n_keyboard_shortcuts",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_keyboard_shortcuts",c,p,0)));t.b("\" role='tab' aria-controls=\"tab-keyboard\" data-toggle=\"tab\" data-target=\"#tab-keyboard\" tabindex=\"-1\">");t.b(t.v(t.d("strings.i18n_keyboard_shortcuts",c,p,0)));t.b("</button></li>");t.b("\n" + i);t.b("           </ul>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("           <div class=\"tab-content\">");t.b("\n" + i);t.b("                <div id=\"tab-style\" class=\"tab-pane active\" role=\"tabpanel\" aria-expanded=\"true\">");t.b("\n" + i);t.b("                <h5 aria-hidden=\"true\">");t.b(t.v(t.d("strings.preview",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                <div  aria-hidden=\"true\" class=\"row\">");t.b("\n" + i);t.b("                    <div data-theme=\"author-theme\" class=\"col-xs-10 col-xs-offset-1 preview-text author-theme\">");t.b("\n" + i);t.b("                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus neque dui, congue a suscipit non, feugiat eu urna. Cras in felis sed orci aliquam sagittis.");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                </div>");t.b("\n");t.b("\n" + i);t.b("<!-- button  type=\"button\" title=\"TESTING\" aria-label=\"TESTING\">TESTING DANIEL</button -->");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-font-size\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_font_size",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-2 icon-scale-down\">");t.b("\n" + i);t.b("                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/glyphicons_115_text_smaller.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-8\">");t.b("\n" + i);t.b("                            <input  type=\"range\" aria-labelledby=\"setting-header-font-size\" id=\"font-size-input\" min=\"60\" aria-value-min=\"60\" aria-valuemin=\"60\" step=\"10\" max=\"170\" aria-value-max=\"170\" aria-valuemax=\"170\" value=\"100\" aria-valuenow=\"100\" aria-value-now=\"100\" aria-valuetext=\"1em\" aria-value-text=\"1em\" title=\"");t.b(t.v(t.d("strings.i18n_font_size",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_font_size",c,p,0)));t.b("\" />");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-2\">");t.b("\n" + i);t.b("                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/glyphicons_116_text_bigger.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-font-selection\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_font_selection",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-8 col-xs-offset-2\">");t.b("\n" + i);t.b("                            <select style=\"width: 100%; padding: 0.5em;\" aria-labelledby=\"setting-header-font-selection\" id=\"font-selection-input\"  title=\"");t.b(t.v(t.d("strings.i18n_font_selection",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_font_selection",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                                <option value=\"0\" aria-label=\"");t.b(t.v(t.d("strings.i18n_fonttype_default",c,p,0)));t.b("\" title=\"");t.b(t.v(t.d("strings.i18n_fonttype_default",c,p,0)));t.b("\">");t.b(t.v(t.d("strings.i18n_fonttype_default",c,p,0)));t.b("</option>");t.b("\n" + i);t.b("							</select>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-color-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_text_and_background_color",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div role=\"group\" aria-labelledby=\"setting-header-color-legend\" id=\"theme-radio-group\" class=\"row\">");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"author-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_author_theme",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_author_theme",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option author-theme clickable\">");t.b(t.v(t.d("strings.i18n_author_theme",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"default-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_black_and_white",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_black_and_white",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option default-theme clickable\">");t.b(t.v(t.d("strings.i18n_black_and_white",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"night-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_arabian_nights",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_arabian_nights",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("]\" class=\"col-xs-8 col-xs-offset-2 theme-option night-theme clickable\" >");t.b(t.v(t.d("strings.i18n_arabian_nights",c,p,0)));t.b("</button> <!-- accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.NightTheme",c,p,0)));t.b("\" -->");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"parchment-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_sands_of_dune",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_sands_of_dune",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option parchment-theme clickable\">");t.b(t.v(t.d("strings.i18n_sands_of_dune",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"ballard-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_ballard_blues",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_ballard_blues",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option ballard-theme clickable\">");t.b(t.v(t.d("strings.i18n_ballard_blues",c,p,0)));t.b("</button>");t.b("\n");t.b("\n" + i);t.b("                        <button role=\"button\" data-theme=\"vancouver-theme\"  title=\"");t.b(t.v(t.d("strings.i18n_vancouver_mist",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_vancouver_mist",c,p,0)));t.b("\" class=\"col-xs-8 col-xs-offset-2 theme-option vancouver-theme clickable\">");t.b(t.v(t.d("strings.i18n_vancouver_mist",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);t.b("                <div id=\"tab-layout\" class=\"tab-pane\" role=\"tabpanel\">");t.b("\n");t.b("\n" + i);t.b("                    <!-- disabled: replaced with setting-header-column-max-width-legend (see below) -->");t.b("\n" + i);t.b("                    <h5 style=\"display:none;\" id=\"setting-header-margins-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_margins",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                    <div style=\"display:none;\" class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-2 icon-scale-down\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin1_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-8\">");t.b("\n" + i);t.b("                            <input  type=\"range\" role=\"slider\" aria-labelledby=\"setting-header-margins-legend\" id=\"margin-size-input\" min=\"20\" aria-value-min=\"20\" aria-valuemin=\"20\" step=\"20\" max=\"100\" aria-value-max=\"100\" aria-valuemax=\"100\" value=\"20\" aria-valuenow=\"20\" aria-value-now=\"20\" aria-valuetext=\"20\" aria-value-text=\"20\" title=\"");t.b(t.v(t.d("strings.i18n_margins",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_margins",c,p,0)));t.b("\"/>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-2\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin4_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                    ");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-column-max-width-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_pageMaxWidth",c,p,0)));t.b("</h5>");t.b("\n" + i);t.b("                     <div class=\"row\">");t.b("\n" + i);t.b("                        <div class=\"col-xs-2\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin4_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-8\">");t.b("\n" + i);t.b("                            <input  type=\"range\" role=\"slider\" aria-labelledby=\"setting-header-column-max-width-legend\" id=\"column-max-width-input\" min=\"500\" aria-value-min=\"500\" aria-valuemin=\"500\" step=\"50\" max=\"2000\" aria-value-max=\"2000\" aria-valuemax=\"2000\" value=\"700\" aria-valuenow=\"700\" aria-value-now=\"700\" aria-valuetext=\"700\" aria-value-text=\"700\" title=\"");t.b(t.v(t.d("strings.i18n_pageMaxWidth",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_pageMaxWidth",c,p,0)));t.b("\"/>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div class=\"col-xs-2 icon-scale-down\">");t.b("\n" + i);t.b("                            <img style=\"height: 32px;\" src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/margin1_off.png\" alt=\"\" aria-hidden=\"true\">");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-display-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_display_format",c,p,0)));t.b("</h5>");t.b("\n");t.b("\n" + i);t.b("                    <div role=\"radiogroup\" class=\"row\" style=\"width:100%;text-align:center;\" aria-labelledby=\"setting-header-display-legend\">");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"spread-default-option\"");t.b("\n" + i);t.b("                        style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"display-format\" value=\"single\" type=\"radio\" id=\"spread-default-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"spread-default-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_spread_auto",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"one-up-option\"");t.b("\n" + i);t.b("                        style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n");t.b("\n" + i);t.b("                            <input  name=\"display-format\" value=\"single\" type=\"radio\" id=\"single-page-radio\" />");t.b("\n" + i);t.b("                                            <label for=\"single-page-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/ico_singlepage_up.png\" alt=\"");t.b(t.v(t.d("strings.i18n_display_format",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_single_pages",c,p,0)));t.b("\"/>");t.b("\n" + i);t.b("                                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"two-up-option\"");t.b("\n" + i);t.b("                        style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n");t.b("\n" + i);t.b("                                <input  name=\"display-format\" value=\"double\" type=\"radio\" id=\"double-page-radio\" />");t.b("\n" + i);t.b("                                            <label for=\"double-page-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                            <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/ico_doublepage_up.png\" alt=\"");t.b(t.v(t.d("strings.i18n_display_format",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_double_pages",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <h5 id=\"setting-header-scroll-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_scroll_mode",c,p,0)));t.b("</h5>");t.b("\n");t.b("\n" + i);t.b("                    <div role=\"radiogroup\" class=\"row\" style=\"width:100%;text-align:center;\" aria-labelledby=\"setting-header-scroll-legend\">");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"scroll-default-option\" style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"scrolling\" value=\"single\" type=\"radio\" id=\"scroll-default-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"scroll-default-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_scroll_mode_auto",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"scroll-doc-option\" style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"scrolling\" value=\"single\" type=\"radio\" id=\"scroll-doc-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"scroll-doc-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                <span style=\"font-size:150%;color:#888888;\" class=\"glyphicon glyphicon-file\" aria-hidden=\"true\"></span> ");t.b(t.v(t.d("strings.i18n_scroll_mode_doc",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"scroll-continuous-option\" style=\"vertical-align:middle;width:30%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"scrolling\" value=\"single\" type=\"radio\" id=\"scroll-continuous-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"scroll-continuous-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                <span style=\"font-size:150%;color:#888888;\" class=\"glyphicon glyphicon-road\" aria-hidden=\"true\"></span> ");t.b(t.v(t.d("strings.i18n_scroll_mode_continuous",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <!-- Page transitions are seriously broken (see readium-shared-js one_page_view.js disablePageTransitions boolean), so we hide the UI config options -->");t.b("\n" + i);t.b("                    <h5 style=\"display:none;\" hiddenx=\"hidden\" id=\"setting-header-pageTransition-legend\" class=\"setting-header\">");t.b(t.v(t.d("strings.i18n_page_transition",c,p,0)));t.b("</h5>");t.b("\n");t.b("\n" + i);t.b("                    <div style=\"display:none; width:100%;text-align:center;\" hiddenx=\"hidden\" role=\"radiogroup\" class=\"row\" aria-labelledby=\"setting-header-pageTransition-legend\">");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-none-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-none-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-none-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_none",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-1-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-1-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-1-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_fade",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-2-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-2-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-2-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_slide",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-3-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-3-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-3-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_swoosh",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n" + i);t.b("                        <div role=\"radio\" id=\"pageTransition-4-option\" style=\"vertical-align:middle;width:15%;display:inline-block;position:relative;\">");t.b("\n" + i);t.b("                            <input style=\"\"  name=\"pageTransition\" value=\"single\" type=\"radio\" id=\"pageTransition-4-radio\"/>");t.b("\n" + i);t.b("                            <label style=\"\" for=\"pageTransition-4-radio\" class=\"underlinedLabel\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_page_transition_butterfly",c,p,0)));t.b("\n" + i);t.b("                            </label>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                    <div id=\"tab-keyboard\" class=\"tab-pane\" role=\"tabpanel\">");t.b("\n");t.b("\n" + i);t.b("                    <div class=\"row\" style=\"position:relative;\">");t.b("\n");t.b("\n" + i);t.b("                        <div id=\"invalid_keyboard_shortcut_ALERT\"></div>");t.b("\n");t.b("\n" + i);t.b("                        <ul id=\"keyboard-list\">");t.b("\n" + i);t.b("                        </ul>");t.b("\n" + i);t.b("                    </div>");t.b("\n" + i);t.b("                     </div>");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <div class=\"modal-footer\">");t.b("\n" + i);t.b("                <button id=\"buttClose\"  type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\" title=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalClose",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalClose",c,p,0)));t.b("]\">");t.b(t.v(t.d("strings.i18n_close",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("                <button id=\"buttSave\"  type=\"button\" class=\"btn btn-primary\" data-dismiss=\"modal\" title=\"");t.b(t.v(t.d("strings.i18n_save_changes",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalSave",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_save_changes",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.SettingsModalSave",c,p,0)));t.b("]\">");t.b(t.v(t.d("strings.i18n_save_changes",c,p,0)));t.b("</button>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("        </div>");t.b("\n" + i);t.b("        <!-- /.modal-content -->");t.b("\n" + i);t.b("    </div>");t.b("\n" + i);t.b("    <!-- /.modal-dialog -->");t.b("\n" + i);t.b("</div>");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
-
-
-define("hgn!readium_js_viewer_html_templates/settings-keyboard-item.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");if(t.s(t.f("name",c,p,1),c,p,0,9,739,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("<li>");t.b("\n" + i);t.b("<label id=\"label_");t.b(t.v(t.f("name",c,p,0)));t.b("\">");t.b(t.v(t.f("i18n",c,p,0)));t.b("<br/><span>");t.b(t.v(t.f("name",c,p,0)));t.b("</span></label>");t.b("\n" + i);t.b("<input id=\"");t.b(t.v(t.f("name",c,p,0)));t.b("\" name=\"");t.b(t.v(t.f("name",c,p,0)));t.b("\" class=\"keyboardInput\" type=\"text\"  placeholder=\"");t.b(t.v(t.f("shortcut",c,p,0)));t.b("\" value=\"");t.b(t.v(t.f("shortcut",c,p,0)));t.b("\" aria-labelledbyxxx=\"label_");t.b(t.v(t.f("name",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.f("i18n",c,p,0)));t.b("\" title=\"");t.b(t.v(t.f("i18n",c,p,0)));t.b("\"></input>");t.b("\n" + i);t.b("<button class=\"resetKey captureKeyboardShortcut\" role=\"button\" data-key=\"");t.b(t.v(t.f("name",c,p,0)));t.b("\"  title=\"");t.b(t.v(t.d("strings.i18n_reset_key",c,p,0)));t.b(" (");t.b(t.v(t.f("def",c,p,0)));t.b(")\" aria-label=\"");t.b(t.v(t.d("strings.i18n_reset_key",c,p,0)));t.b(" (");t.b(t.v(t.f("def",c,p,0)));t.b(")\"><span aria-hidden=\"true\">&#8855;</span></button>");t.b("\n" + i);t.b("<span id=\"duplicate_keyboard_shortcut\" aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_duplicate_keyboard_shortcut",c,p,0)));t.b("</span>");t.b("\n" + i);t.b("<span id=\"invalid_keyboard_shortcut\" aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_invalid_keyboard_shortcut",c,p,0)));t.b("</span>");t.b("\n" + i);t.b("</li>");t.b("\n" + i);});c.pop();}if(!t.s(t.f("name",c,p,1),c,p,1,0,0,"")){t.b("<li id=\"resetAllKeys");t.b(t.v(t.f("id",c,p,0)));t.b("\" class=\"resetAllKeys\">");t.b("\n" + i);t.b("<button class=\"resetKey\" role=\"button\"  title=\"");t.b(t.v(t.d("strings.i18n_reset_key_all",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_reset_key_all",c,p,0)));t.b("\"><span aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_reset_key_all",c,p,0)));t.b("  &#8855;</span></button>");t.b("\n" + i);t.b("</li>");t.b("\n" + i);};return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
 
 // FORK:
 // https://github.com/danielweck/keymaster
@@ -67234,9 +67777,1125 @@ define('readium_js_viewer/ReaderSettingsDialog',['./ModuleConfig', 'hgn!readium_
     }
 });
 
+define('Analytics',[],function(){
+    return{
+        trackView : function(){},
+        sendEvent : function(){}
+    }
+});
+define('readium_js_viewer/versioning/ReadiumVersioning',['readium_js/Readium'], function(Readium){
 
-define("hgn!readium_js_viewer_html_templates/about-dialog.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"modal fade\" id=\"about-dialog\" tabindex=\"-1\" role=\"dialog\" aria-label=\"");t.b(t.t(t.d("strings.about",c,p,0)));t.b("\" >");t.b("\n" + i);t.b("  <div class=\"modal-dialog\">");t.b("\n" + i);t.b("    <div class=\"modal-content\">");t.b("\n" + i);t.b("      <div class=\"modal-body\">");t.b("\n" + i);t.b("          <div class=\"splash-logo\">");t.b("\n" + i);t.b("              <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/about_readium_logo.png\" alt=\"\">");t.b("\n" + i);t.b("          </div>");t.b("\n");t.b("\n" + i);t.b("          <div class=\"about-message\">");t.b("\n" + i);t.b("              <span>");t.b(t.t(t.d("strings.i18n_html_readium_tm_a_project",c,p,0)));t.b("</span>");t.b("\n" + i);t.b("          </div>");t.b("\n" + i);t.b("          <div>");t.b("\n" + i);t.b("                 <img src=\"");t.b(t.t(t.f("imagePathPrefix",c,p,0)));t.b("images/partner_logos.png\" alt=\"");t.b(t.t(t.d("strings.i18n_alt_about_logos",c,p,0)));t.b("\">");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("        <h4 style=\"color:#111155\">");t.b(t.t(t.d("strings.gethelp",c,p,0)));t.b("</h4>");t.b("\n" + i);t.b("        <div class=\"version\">");t.b(t.v(t.d("viewerJs.chromeVersion",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class=\"build-date\">");t.b(t.v(t.f("dateTimeString",c,p,0)));t.b("</div>");t.b("\n" + i);t.b("        <div class=\"version-details\">");t.b("\n" + i);t.b("            ");t.b("\n" + i);t.b("          <div><a target=\"_blank\" href=\"https://github.com/readium/readium-js-viewer/tree/");t.b(t.v(t.d("viewerJs.sha",c,p,0)));t.b("\">readium-js-viewer@");t.b(t.v(t.d("viewerJs.sha",c,p,0)));t.b("</a>");if(!t.s(t.d("viewerJs.clean",c,p,1),c,p,1,0,0,"")){t.b("<span class=\"local-changes-alert\"> (");t.b(t.t(t.d("strings.gitHasLocalChanges",c,p,0)));t.b(")</span>");};t.b("</div>");t.b("\n" + i);t.b("          ");t.b("\n" + i);t.b("          <div><a target=\"_blank\" href=\"https://github.com/readium/readium-js/tree/");t.b(t.v(t.d("readiumJs.sha",c,p,0)));t.b("\">readium-js@");t.b(t.v(t.d("readiumJs.sha",c,p,0)));t.b("</a>");if(!t.s(t.d("readiumJs.clean",c,p,1),c,p,1,0,0,"")){t.b("<span class=\"local-changes-alert\"> (");t.b(t.t(t.d("strings.gitHasLocalChanges",c,p,0)));t.b(")</span>");};t.b("</div>");t.b("\n" + i);t.b("          ");t.b("\n" + i);t.b("          <div><a target=\"_blank\" href=\"https://github.com/readium/readium-shared-js/tree/");t.b(t.v(t.d("sharedJs.sha",c,p,0)));t.b("\">readium-shared-js@");t.b(t.v(t.d("sharedJs.sha",c,p,0)));t.b("</a>");if(!t.s(t.d("sharedJs.clean",c,p,1),c,p,1,0,0,"")){t.b("<span class=\"local-changes-alert\"> (");t.b(t.t(t.d("strings.gitHasLocalChanges",c,p,0)));t.b(")</span>");};t.b("</div>");t.b("\n");t.b("\n" + i);t.b("        </div>");t.b("\n" + i);t.b("      </div>");t.b("\n" + i);t.b("    </div><!-- /.modal-content -->");t.b("\n" + i);t.b("  </div><!-- /.modal-dialog -->");t.b("\n" + i);t.b("</div><!-- /.modal -->");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
+    var PackagedVersioning = {
+        getVersioningInfo : function(callback){
 
+            Readium.getVersion(function(version){
+
+                var versionInfo = {};
+                versionInfo = version;
+                
+                var date = new Date(version.readiumJsViewer.timestamp);
+                versionInfo.dateTimeString = date.toUTCString ? date.toUTCString() : date.toString();
+                
+                callback(versionInfo);
+            });
+        }
+    }
+    return PackagedVersioning;
+});
+
+define('readium_js_viewer/EpubLibrary',[
+'./ModuleConfig',
+'jquery',
+'bootstrap',
+'bootstrapA11y',
+'StorageManager',
+'Settings',
+'./EpubLibraryManager',
+'i18nStrings',
+'hgn!readium_js_viewer_html_templates/library-navbar.html',
+'hgn!readium_js_viewer_html_templates/library-body.html',
+'hgn!readium_js_viewer_html_templates/empty-library.html',
+'hgn!readium_js_viewer_html_templates/library-item.html',
+'hgn!readium_js_viewer_html_templates/details-dialog.html',
+'hgn!readium_js_viewer_html_templates/about-dialog.html',
+'hgn!readium_js_viewer_html_templates/details-body.html',
+'hgn!readium_js_viewer_html_templates/add-epub-dialog.html',
+'./ReaderSettingsDialog',
+'./Dialogs',
+'./workers/Messages',
+'Analytics',
+'./Keyboard',
+'./versioning/ReadiumVersioning',
+'readium_shared_js/helpers'],
+
+function(
+moduleConfig,
+$,
+bootstrap,
+bootstrapA11y,
+StorageManager,
+Settings,
+libraryManager,
+Strings,
+LibraryNavbar,
+LibraryBody,
+EmptyLibrary,
+LibraryItem,
+DetailsDialog,
+AboutDialog,
+DetailsBody,
+AddEpubDialog,
+SettingsDialog,
+Dialogs,
+Messages,
+Analytics,
+Keyboard,
+Versioning,
+Helpers){
+
+    var detailsDialogStr = DetailsDialog({strings: Strings});
+
+    var heightRule,
+        noCoverRule;
+        //maxHeightRule
+
+    var findHeightRule = function(){
+
+         var styleSheet=document.styleSheets[0];
+         var ii=0;
+         var cssRule;
+        do {
+            if (styleSheet.cssRules) {
+                cssRule = styleSheet.cssRules[ii];
+            } else {
+                cssRule = styleSheet.rules[ii];
+            }
+            if (cssRule && cssRule.selectorText)  {
+                if (cssRule.selectorText.toLowerCase()=='.library-item') {
+                    heightRule = cssRule;
+                }
+                // else if (cssRule.selectorText.toLowerCase()=='.library-item img') {
+                //     maxHeightRule = cssRule;
+                // }
+                else if (cssRule.selectorText.toLowerCase() == 'body:not(.list-view) .library-item .no-cover'){
+                    noCoverRule = cssRule;
+                }
+
+            }
+            ii++;
+        } while (cssRule);
+       }
+
+
+    var setItemHeight = function(){
+        if (!heightRule || !noCoverRule) return;
+
+        var medWidth = 2,
+            smWidth = 3,
+            xsWidth = 4,
+            rowHeight = 0,
+            imgWidth = 0,
+            scale = 1;
+
+        var winWidth = window.innerWidth;
+
+        if (winWidth >= 992){
+            imgWidth = winWidth * (medWidth/12) - 30;
+            rowHeight = 1.33 * imgWidth + 60;
+        }
+        else if (winWidth >= 768){
+            imgWidth = winWidth * (smWidth/12) - 30;
+            rowHeight = 1.33 * imgWidth + 60;
+        }
+        else{
+            imgWidth = winWidth * (xsWidth/12) - 30;
+            rowHeight = 1.33 * imgWidth + 20;
+        }
+        heightRule.style.height  = rowHeight + 'px';
+        scale = imgWidth/300;
+
+        noCoverRule.style.width = imgWidth + 'px';
+        noCoverRule.style.height = 1.33 * imgWidth + 'px';
+        noCoverRule.style.fontSize = 40 * scale + 'px';
+        //maxHeightRule.style.height = 1.33 * imgWidth + 'px';
+        //maxHeightRule.style.width = imgWidth + 'px';
+    };
+
+    var showDetailsDialog = function(details){
+        var bodyStr = DetailsBody({
+            data: details,
+            strings: Strings
+        });
+
+        $('.details-dialog .modal-body').html(bodyStr);
+        
+        $('.details-dialog .delete').on('click', function(){
+            $('.details-dialog').modal('hide');
+            var success = function(){
+                libraryManager.retrieveAvailableEpubs(loadLibraryItems);
+                Dialogs.closeModal();
+            }
+
+            var promptMsg = Strings.i18n_are_you_sure + ' \'' + details.title + '\'';
+
+            Dialogs.showModalPrompt(Strings.delete_dlg_title, promptMsg,
+                                    Strings.i18n_delete, Strings.i18n_cancel,
+                                    function(){
+                                        Dialogs.showModalProgress(Strings.delete_progress_title, '');
+                                        Dialogs.updateProgress(100, Messages.PROGRESS_DELETING, details.title, true);
+                                        libraryManager.deleteEpubWithId(details.rootDir, success, showError)
+                                    });
+        });
+    }
+
+    var showError = function(errorCode, data){
+        Dialogs.showError(errorCode, data);
+    }
+
+    var loadDetails = function(e){
+        var $this = $(this),
+            url = $this.attr('data-package'),
+            bookRoot = $this.attr('data-root'),
+            rootDir = $this.attr('data-root-dir'),
+            noCoverBg = $this.attr('data-no-cover');
+
+        $('.details-dialog').remove();
+
+        $('.details-dialog').off('hidden.bs.modal');
+        $('.details-dialog').off('shown.bs.modal');
+
+        $('#app-container').append(detailsDialogStr);
+        
+        $('#details-dialog').on('hidden.bs.modal', function () {
+            Keyboard.scope('library');
+
+            setTimeout(function(){ $this.focus(); }, 50);
+        });
+        $('#details-dialog').on('shown.bs.modal', function(){
+            Keyboard.scope('details');
+            setTimeout(function(){ $('#closeEpubDetailsCross')[0].focus(); }, 1000);
+        });
+
+
+        $('.details-dialog').modal();
+        
+        var retrieveDetails = function(packageUrl) {
+            
+            if (!packageUrl || packageUrl.indexOf(".opf") < 0) {
+                console.warn("no package path (OPF within zipped EPUB archive?): " + packageUrl);
+            }
+            
+            libraryManager.retrieveFullEpubDetails(packageUrl, bookRoot, rootDir, noCoverBg, showDetailsDialog, showError);
+        };
+        
+        console.log("OPF package URL: " + url);
+        if (url && url.indexOf(".opf") < 0) {
+            
+            var urlContainerXml = url + "META-INF/container.xml"; 
+            $.get(urlContainerXml, function(data){
+    
+                if(typeof(data) === "string" ) {
+                    var parser = new window.DOMParser;
+                    data = parser.parseFromString(data, 'text/xml');
+                }
+                var $rootfile = $('rootfile', data);
+                var rootFilePath = $rootfile.attr('full-path');
+                console.log("OPF package path (root-file from container.xml): " + rootFilePath);
+                
+                var packageUrl = url + (Helpers.EndsWith(url, "/") ? "" : "/") + rootFilePath;
+            
+                console.log("OPF package URL (from container.xml): " + packageUrl);
+                retrieveDetails(packageUrl);
+    
+            }).fail(function() {
+                //console.warn(arguments);
+                console.error("FAILED OPF package URL (from container.xml): " + urlContainerXml);
+                retrieveDetails(url);
+            });
+        }
+        else {
+            retrieveDetails(url);
+        }
+    }
+
+    var loadLibraryItems = function(epubs){
+        $('#app-container .library-items').remove();
+        $('#app-container').append(LibraryBody({}));
+        if (!epubs.length){
+            $('#app-container .library-items').append(EmptyLibrary({imagePathPrefix: moduleConfig.imagePathPrefix, strings: Strings}));
+            return;
+        }
+        
+        var processEpub = function(epubs, count) {
+            var epub = epubs[count];
+            if (!epub) { // count >= epubs.length
+                $('.details').on('click', loadDetails);
+                return;
+            }
+
+            var noCoverBackground = moduleConfig.imagePathPrefix + 'images/covers/cover' + ((count % 8) + 1) + '.jpg';
+            if (epub.isSubLibraryLink) {
+                noCoverBackground = moduleConfig.imagePathPrefix + 'images/covers/cover2.jpg';
+            }
+            
+            var createLibraryItem = function() {
+
+                // See --COMMENT-- below!
+                // if (!epub.isSubLibraryLink && !epub.packagePath) {
+                //     console.warn("no epub.packagePath (OPF within zipped EPUB archive?): " + epub.rootUrl);
+                //     //console.log(epub);
+                // }
+                
+                $('.library-items').append(LibraryItem({count:{n: count+1, tabindex:count*2+99}, epub: epub, strings: Strings, noCoverBackground: noCoverBackground}));
+                
+                processEpub(epubs, ++count);
+            };
+            
+            if (!epub.isSubLibraryLink && !epub.packagePath) {
+                
+                createLibraryItem();
+                
+                // --COMMENT--
+                // Code below works, but just here to demonstrate how the package OPF path can be resolved whilst populating the library view. Because the HTTP requests for each ebook introduce huge lag, instead we resolve the OPF path on-demand, when user chooses to see the EPUB details / metadata dialog popup (see loadDetails() function above, which itself emits an HTTP request to get the actual OPF file XML payload, via LibraryManager.retrieveFullEpubDetails())
+                // $.get(epub.rootUrl + "/META-INF/container.xml", function(data){
+        
+                //     if(typeof(data) === "string" ) {
+                //         var parser = new window.DOMParser;
+                //         data = parser.parseFromString(data, 'text/xml');
+                //     }
+                //     var $rootfile = $('rootfile', data);
+                //     epub.packagePath = $rootfile.attr('full-path');
+                
+                //     createLibraryItem();
+        
+                // }).fail(function() {
+                //     //console.warn(arguments);
+                //     createLibraryItem();
+                // });
+            }
+            else {
+                createLibraryItem();
+            }
+        };
+        processEpub(epubs, 0);
+    }
+
+    var readClick = function(e){
+        var urlParams = Helpers.getURLQueryParams();
+        //var ebookURL = urlParams['epub'];
+        var libraryURL = urlParams['epubs'];
+        var embedded = urlParams['embedded'];
+            
+        var ebookURL = $(this).attr('data-book');
+        if (ebookURL) {
+            var eventPayload = {embedded: embedded, epub: ebookURL, epubs: libraryURL};
+            $(window).triggerHandler('readepub', eventPayload);
+        }
+        else {
+            var libURL = $(this).attr('data-library');
+            if (libURL) {
+                
+                // TODO: this doesn't work, so we refresh the whole page, bypassing pushState (replaceState is used instead after reload)
+                // libraryManager.resetLibraryData();
+                // var eventPayload = libURL;
+                // $(window).triggerHandler('loadlibrary', eventPayload);
+                            
+                var URLPATH =
+                window.location ? (
+                    window.location.protocol
+                    + "//"
+                    + window.location.hostname
+                    + (window.location.port ? (':' + window.location.port) : '')
+                    + window.location.pathname
+                ) : 'index.html'
+                ;
+                
+                var url = URLPATH + '?epubs=' + encodeURIComponent(libURL);
+                
+                window.location = url;
+            } else {
+                var linkURL = $(this).attr('data-link');
+                if (linkURL) {
+                    window.open(linkURL, '_blank');
+                }
+            }
+        }
+        return false;
+    }
+
+    var unloadLibraryUI = function(){
+
+        // needed only if access keys can potentially be used to open a book while a dialog is opened, because keyboard.scope() is not accounted for with HTML access keys :(
+        Dialogs.closeModal();
+        Dialogs.reset();
+        $('.modal-backdrop').remove();
+
+        Keyboard.off('library');
+        Keyboard.off('settings');
+
+        $('#settings-dialog').off('hidden.bs.modal');
+        $('#settings-dialog').off('shown.bs.modal');
+
+        $('#about-dialog').off('hidden.bs.modal');
+        $('#about-dialog').off('shown.bs.modal');
+
+        $('#add-epub-dialog').off('hidden.bs.modal');
+        $('#add-epub-dialog').off('shown.bs.modal');
+
+        $('.details-dialog').off('hidden.bs.modal');
+        $('.details-dialog').off('shown.bs.modal');
+
+        $(window).off('resize');
+        $(document.body).off('click');
+        $(window).off('storageReady');
+        $('#app-container').attr('style', '');
+    }
+
+    var promptForReplace = function(originalData, replaceCallback, keepBothCallback){
+        Settings.get('replaceByDefault', function(val){
+            if (val === 'true'){
+                replaceCallback()
+            }
+            else{
+                keepBothCallback();
+            }
+        })
+    }
+
+    var handleLibraryChange = function(){
+        Dialogs.closeModal();
+        libraryManager.retrieveAvailableEpubs(loadLibraryItems);
+    }
+
+    var importZippedEpub = function(file) {
+        
+        if (!window.Blob || !window.File) return;
+        
+        if (!(file instanceof Blob) || !(file instanceof File)) return;
+        
+        
+        var title = Strings.import_dlg_title + " [ " + file.name + " ]";
+        Dialogs.showModalProgress(title, Strings.import_dlg_message);
+
+        libraryManager.handleZippedEpub({
+            file: file,
+            overwrite: promptForReplace,
+            success: handleLibraryChange,
+            progress: Dialogs.updateProgress,
+            error: showError
+        });
+    };
+
+    var importZippedEpubs_CANCELLED = false;
+    var importZippedEpubs = function(files, i) {
+    
+        if (!window.Blob || !window.File) return;
+
+         if (i == 0) { // first call
+            importZippedEpubs_CANCELLED = false;
+        } else {
+            if (importZippedEpubs_CANCELLED) {
+                
+                handleLibraryChange();
+
+                setTimeout(function(){
+                    Dialogs.showModalMessage(Strings.i18n_add_book, Strings.i18n_cancel + " - " + Strings.import_dlg_title);
+                }, 800);
+                
+                return; // break the iteration
+            }
+        }
+        
+        if (i >= files.length) { // last call
+            handleLibraryChange();
+            return;
+        }
+
+        var nextImportEPUB = function() {
+            setTimeout(function(){
+                //Dialogs.closeModal();
+                //Dialogs.reset(); // ? (costly DOM mutations)
+                importZippedEpubs(files, ++i); // next
+            }, 100); // time for the Web Worker to die (background unzipping)
+        };
+
+        var file = files[i];
+
+        if (!(file instanceof Blob) || !(file instanceof File)) {
+
+            nextImportEPUB();
+
+            return;
+        }
+
+        var fileInfo = " [ " + file.name + " ] "+(i+1)+"/"+(files.length)+"";
+        var title = Strings.import_dlg_title + fileInfo;
+        if (i == 0) { // first call
+            Dialogs.showModalProgress(title, Strings.import_dlg_message, function() {
+                importZippedEpubs_CANCELLED = true;
+                Dialogs.updateModalProgressTitle("(" + Strings.i18n_cancel + ") " + title);
+            });
+        } else {
+            Dialogs.updateModalProgressTitle(title);
+        }
+
+        Dialogs.updateProgress(0, Messages.PROGRESS_EXTRACTING, file.name);
+                
+        libraryManager.handleZippedEpub({
+            file: file,
+            overwrite: promptForReplace,
+            success: function() {
+
+                nextImportEPUB();
+            },
+            progress: Dialogs.updateProgress,
+            error: function(errorCode, data) {
+                
+                // TODO: collapse multiple errors into a single user prompt 
+                //showError(errorCode, data);
+
+                var msg = Strings.err_unknown;
+                switch(errorCode){
+                    case Messages.ERROR_PACKAGE_PARSE:
+                        Dialogs.updateModalProgressTitle(Strings.err_epub_corrupt + fileInfo);
+                        //Dialogs.showErrorWithDetails(Strings.err_epub_corrupt, data);
+                        return;
+                    case Messages.ERROR_STORAGE:
+                        msg = Strings.err_storage;
+                        break;
+                    case Messages.ERROR_EPUB:
+                        msg = Strings.err_epub_corrupt;
+                        break;
+                    case Messages.ERROR_AJAX:
+                        msg = Strings.err_ajax;
+                        break;
+                    default:
+                        msg = Strings.err_unknown;
+                        console.trace();
+                        break;
+                }
+                Dialogs.updateModalProgressTitle(Strings.err_dlg_title + " (" + msg + ")" + fileInfo);
+                //Dialogs.showModalMessage(Strings.err_dlg_title, msg);
+                
+                setTimeout(function(){
+                    nextImportEPUB();
+                }, 500); // short error report, then let's move to the next item.
+            }
+        });
+    };
+
+    var handleFileSelect = function(evt){
+        $('#add-epub-dialog').modal('hide');
+                
+        if (evt.target.files.length > 1) {
+            importZippedEpubs(evt.target.files, 0);
+            return;
+        }
+
+        var file = evt.target.files[0];
+        importZippedEpub(file);
+    }
+
+    var handleDirSelect = function(evt){
+        var files = evt.target.files;
+        $('#add-epub-dialog').modal('hide');
+        Dialogs.showModalProgress(Strings.import_dlg_title, Strings.import_dlg_message);
+        libraryManager.handleDirectoryImport({
+            files: files,
+            overwrite: promptForReplace,
+            success: handleLibraryChange,
+            progress: Dialogs.updateProgress,
+            error: showError
+        });
+    }
+    
+    var handleUrlSelect = function(){
+        var url = $('#url-upload').val();
+        $('#add-epub-dialog').modal('hide');
+        Dialogs.showModalProgress(Strings.import_dlg_title, Strings.import_dlg_message);
+        libraryManager.handleUrlImport({
+            url: url,
+            overwrite: promptForReplace,
+            success: handleLibraryChange,
+            progress: Dialogs.updateProgress,
+            error: showError
+        });
+    }
+
+    var importEpub = function(ebook) {
+        // TODO: also allow import of URL and directory select
+        // See libraryManager.canHandleUrl() + handleUrlSelect()
+        // See libraryManager.canHandleDirectory() + handleDirSelect()
+        
+        if (Array.isArray(ebook)) {
+            importZippedEpubs(ebook, 0);
+            return;
+        }
+
+        importZippedEpub(ebook);
+    };
+
+    var doMigration = function(){
+        Dialogs.showModalProgress(Strings.migrate_dlg_title, Strings.migrate_dlg_message);
+        libraryManager.handleMigration({
+            success: function(){
+                
+                // Note: automatically JSON.stringify's the passed value!
+                Settings.put('needsMigration', false, $.noop);
+
+                handleLibraryChange();
+            },
+            progress: Dialogs.updateProgress,
+            error: showError
+        });
+    }
+
+    var loadLibraryUI = function(){
+
+        Dialogs.reset();
+
+        Keyboard.scope('library');
+
+        Analytics.trackView('/library');
+        var $appContainer = $('#app-container');
+        $appContainer.empty();
+        SettingsDialog.initDialog();
+        
+        $appContainer.append(AddEpubDialog({
+            canHandleUrl : libraryManager.canHandleUrl(),
+            canHandleDirectory : libraryManager.canHandleDirectory(),
+            strings: Strings
+        }));
+        
+        Versioning.getVersioningInfo(function(version){
+            $appContainer.append(AboutDialog({imagePathPrefix: moduleConfig.imagePathPrefix, strings: Strings, dateTimeString: version.dateTimeString, viewerJs: version.readiumJsViewer, readiumJs: version.readiumJs, sharedJs: version.readiumSharedJs, cfiJs: version.readiumCfiJs}));
+        });
+
+
+        $('#about-dialog').on('hidden.bs.modal', function () {
+            Keyboard.scope('library');
+
+            setTimeout(function(){ $("#aboutButt1").focus(); }, 50);
+        });
+        $('#about-dialog').on('shown.bs.modal', function(){
+            Keyboard.scope('about');
+        });
+
+        $('#add-epub-dialog').on('hidden.bs.modal', function () {
+            Keyboard.scope('library');
+
+            setTimeout(function(){ $("#addbutt").focus(); }, 50);
+        });
+        $('#add-epub-dialog').on('shown.bs.modal', function(){
+            Keyboard.scope('add');
+
+            $('#add-epub-dialog input').val('');
+
+            setTimeout(function(){ $('#closeAddEpubCross')[0].focus(); }, 1000);
+        });
+        $('#url-upload').on('keyup', function(){
+            var val = $(this).val();
+            if (val && val.length){
+                $('#add-epub-dialog .add-book').prop('disabled', false);
+            }
+            else{
+                $('#add-epub-dialog .add-book').prop('disabled', true);
+            }
+        });
+        $('.add-book').on('click', handleUrlSelect);
+        $('nav').empty();
+        $('nav').attr("aria-label", Strings.i18n_toolbar);
+        $('nav').append(LibraryNavbar({strings: Strings, dialogs: Dialogs, keyboard: Keyboard}));
+        $('.icon-list-view').on('click', function(){
+            $(document.body).addClass('list-view');
+            setTimeout(function(){ $('.icon-thumbnails')[0].focus(); }, 50);
+        });
+        $('.icon-thumbnails').on('click', function(){
+            $(document.body).removeClass('list-view');
+            setTimeout(function(){ $('.icon-list-view')[0].focus(); }, 50);
+        });
+        findHeightRule();
+        setItemHeight();
+        StorageManager.initStorage(function(){
+            libraryManager.retrieveAvailableEpubs(loadLibraryItems);
+        }, showError);
+
+        Keyboard.on(Keyboard.ShowSettingsModal, 'library', function(){$('#settings-dialog').modal("show");});
+
+        $(window).trigger('libraryUIReady');
+        $(window).on('resize', setItemHeight);
+
+        var setAppSize = function(){
+            var appHeight = $(document.body).height() - $('#app-container')[0].offsetTop;
+            $('#app-container').height(appHeight);
+        }
+        $(window).on('resize', setAppSize);
+        $('#app-container').css('overflowY', 'auto');
+
+        setAppSize();
+        $(document.body).on('click', '.read', readClick);
+        $('#epub-upload').on('change', handleFileSelect);
+        $('#dir-upload').on('change', handleDirSelect);
+
+        document.title = Strings.i18n_readium_library;
+
+        $('#settings-dialog').on('hidden.bs.modal', function () {
+
+            Keyboard.scope('library');
+
+            setTimeout(function(){ $("#settbutt1").focus(); }, 50);
+
+            $("#buttSave").removeAttr("accesskey");
+            $("#buttClose").removeAttr("accesskey");
+        });
+        $('#settings-dialog').on('shown.bs.modal', function () {
+
+            Keyboard.scope('settings');
+
+            $("#buttSave").attr("accesskey", Keyboard.accesskeys.SettingsModalSave);
+            $("#buttClose").attr("accesskey", Keyboard.accesskeys.SettingsModalClose);
+        });
+
+
+        //async in Chrome
+        Settings.get("needsMigration", function(needsMigration){
+            if (needsMigration){
+                doMigration();
+            }
+        });
+    }
+
+    var applyKeyboardSettingsAndLoadUi = function(data)
+    {
+        if (data && data.epubs && (typeof data.epubs == "string")) {
+            
+            // this is normally init'ed at page launch using the "epubs" URL GET query parameter,
+            // but needs manually setting when using pushState() to refresh the page contents with a different library source 
+            moduleConfig.epubLibraryPath = data.epubs;
+        }
+        
+        // override current scheme with user options
+        Settings.get('reader', function(json)
+        {
+           Keyboard.applySettings(json);
+
+           loadLibraryUI();
+           
+           if (data && data.importEPUB) { // File/Blob, possibly Array
+               importEpub(data.importEPUB);
+           }
+        });
+    };
+    window.setReplaceByDefault = function(replace){
+        // Note: automatically JSON.stringify's the passed value!
+        Settings.put('replaceByDefault', String(replace));
+    }
+    return {
+        loadUI : applyKeyboardSettingsAndLoadUi,
+        unloadUI : unloadLibraryUI,
+        importEpub : importEpub 
+    };
+});
+
+/**
+ * Copyright (c) 2011-2014 Felix Gnass
+ * Licensed under the MIT license
+ * http://spin.js.org/
+ *
+ * Example:
+    var opts = {
+      lines: 12             // The number of lines to draw
+    , length: 7             // The length of each line
+    , width: 5              // The line thickness
+    , radius: 10            // The radius of the inner circle
+    , scale: 1.0            // Scales overall size of the spinner
+    , corners: 1            // Roundness (0..1)
+    , color: '#000'         // #rgb or #rrggbb
+    , opacity: 1/4          // Opacity of the lines
+    , rotate: 0             // Rotation offset
+    , direction: 1          // 1: clockwise, -1: counterclockwise
+    , speed: 1              // Rounds per second
+    , trail: 100            // Afterglow percentage
+    , fps: 20               // Frames per second when using setTimeout()
+    , zIndex: 2e9           // Use a high z-index by default
+    , className: 'spinner'  // CSS class to assign to the element
+    , top: '50%'            // center vertically
+    , left: '50%'           // center horizontally
+    , shadow: false         // Whether to render a shadow
+    , hwaccel: false        // Whether to use hardware acceleration (might be buggy)
+    , position: 'absolute'  // Element positioning
+    }
+    var target = document.getElementById('foo')
+    var spinner = new Spinner(opts).spin(target)
+ */
+;(function (root, factory) {
+
+  /* CommonJS */
+  if (typeof module == 'object' && module.exports) module.exports = factory()
+
+  /* AMD module */
+  else if (typeof define == 'function' && define.amd) define('spin',factory)
+
+  /* Browser global */
+  else root.Spinner = factory()
+}(this, function () {
+  "use strict"
+
+  var prefixes = ['webkit', 'Moz', 'ms', 'O'] /* Vendor prefixes */
+    , animations = {} /* Animation rules keyed by their name */
+    , useCssAnimations /* Whether to use CSS animations or setTimeout */
+    , sheet /* A stylesheet to hold the @keyframe or VML rules. */
+
+  /**
+   * Utility function to create elements. If no tag name is given,
+   * a DIV is created. Optionally properties can be passed.
+   */
+  function createEl (tag, prop) {
+    var el = document.createElement(tag || 'div')
+      , n
+
+    for (n in prop) el[n] = prop[n]
+    return el
+  }
+
+  /**
+   * Appends children and returns the parent.
+   */
+  function ins (parent /* child1, child2, ...*/) {
+    for (var i = 1, n = arguments.length; i < n; i++) {
+      parent.appendChild(arguments[i])
+    }
+
+    return parent
+  }
+
+  /**
+   * Creates an opacity keyframe animation rule and returns its name.
+   * Since most mobile Webkits have timing issues with animation-delay,
+   * we create separate rules for each line/segment.
+   */
+  function addAnimation (alpha, trail, i, lines) {
+    var name = ['opacity', trail, ~~(alpha * 100), i, lines].join('-')
+      , start = 0.01 + i/lines * 100
+      , z = Math.max(1 - (1-alpha) / trail * (100-start), alpha)
+      , prefix = useCssAnimations.substring(0, useCssAnimations.indexOf('Animation')).toLowerCase()
+      , pre = prefix && '-' + prefix + '-' || ''
+
+    if (!animations[name]) {
+      sheet.insertRule(
+        '@' + pre + 'keyframes ' + name + '{' +
+        '0%{opacity:' + z + '}' +
+        start + '%{opacity:' + alpha + '}' +
+        (start+0.01) + '%{opacity:1}' +
+        (start+trail) % 100 + '%{opacity:' + alpha + '}' +
+        '100%{opacity:' + z + '}' +
+        '}', sheet.cssRules.length)
+
+      animations[name] = 1
+    }
+
+    return name
+  }
+
+  /**
+   * Tries various vendor prefixes and returns the first supported property.
+   */
+  function vendor (el, prop) {
+    var s = el.style
+      , pp
+      , i
+
+    prop = prop.charAt(0).toUpperCase() + prop.slice(1)
+    if (s[prop] !== undefined) return prop
+    for (i = 0; i < prefixes.length; i++) {
+      pp = prefixes[i]+prop
+      if (s[pp] !== undefined) return pp
+    }
+  }
+
+  /**
+   * Sets multiple style properties at once.
+   */
+  function css (el, prop) {
+    for (var n in prop) {
+      el.style[vendor(el, n) || n] = prop[n]
+    }
+
+    return el
+  }
+
+  /**
+   * Fills in default values.
+   */
+  function merge (obj) {
+    for (var i = 1; i < arguments.length; i++) {
+      var def = arguments[i]
+      for (var n in def) {
+        if (obj[n] === undefined) obj[n] = def[n]
+      }
+    }
+    return obj
+  }
+
+  /**
+   * Returns the line color from the given string or array.
+   */
+  function getColor (color, idx) {
+    return typeof color == 'string' ? color : color[idx % color.length]
+  }
+
+  // Built-in defaults
+
+  var defaults = {
+    lines: 12             // The number of lines to draw
+  , length: 7             // The length of each line
+  , width: 5              // The line thickness
+  , radius: 10            // The radius of the inner circle
+  , scale: 1.0            // Scales overall size of the spinner
+  , corners: 1            // Roundness (0..1)
+  , color: '#000'         // #rgb or #rrggbb
+  , opacity: 1/4          // Opacity of the lines
+  , rotate: 0             // Rotation offset
+  , direction: 1          // 1: clockwise, -1: counterclockwise
+  , speed: 1              // Rounds per second
+  , trail: 100            // Afterglow percentage
+  , fps: 20               // Frames per second when using setTimeout()
+  , zIndex: 2e9           // Use a high z-index by default
+  , className: 'spinner'  // CSS class to assign to the element
+  , top: '50%'            // center vertically
+  , left: '50%'           // center horizontally
+  , shadow: false         // Whether to render a shadow
+  , hwaccel: false        // Whether to use hardware acceleration (might be buggy)
+  , position: 'absolute'  // Element positioning
+  }
+
+  /** The constructor */
+  function Spinner (o) {
+    this.opts = merge(o || {}, Spinner.defaults, defaults)
+  }
+
+  // Global defaults that override the built-ins:
+  Spinner.defaults = {}
+
+  merge(Spinner.prototype, {
+    /**
+     * Adds the spinner to the given target element. If this instance is already
+     * spinning, it is automatically removed from its previous target b calling
+     * stop() internally.
+     */
+    spin: function (target) {
+      this.stop()
+
+      var self = this
+        , o = self.opts
+        , el = self.el = createEl(null, {className: o.className})
+
+      css(el, {
+        position: o.position
+      , width: 0
+      , zIndex: o.zIndex
+      , left: o.left
+      , top: o.top
+      })
+
+      if (target) {
+        target.insertBefore(el, target.firstChild || null)
+      }
+
+      el.setAttribute('role', 'progressbar')
+      self.lines(el, self.opts)
+
+      if (!useCssAnimations) {
+        // No CSS animation support, use setTimeout() instead
+        var i = 0
+          , start = (o.lines - 1) * (1 - o.direction) / 2
+          , alpha
+          , fps = o.fps
+          , f = fps / o.speed
+          , ostep = (1 - o.opacity) / (f * o.trail / 100)
+          , astep = f / o.lines
+
+        ;(function anim () {
+          i++
+          for (var j = 0; j < o.lines; j++) {
+            alpha = Math.max(1 - (i + (o.lines - j) * astep) % f * ostep, o.opacity)
+
+            self.opacity(el, j * o.direction + start, alpha, o)
+          }
+          self.timeout = self.el && setTimeout(anim, ~~(1000 / fps))
+        })()
+      }
+      return self
+    }
+
+    /**
+     * Stops and removes the Spinner.
+     */
+  , stop: function () {
+      var el = this.el
+      if (el) {
+        clearTimeout(this.timeout)
+        if (el.parentNode) el.parentNode.removeChild(el)
+        this.el = undefined
+      }
+      return this
+    }
+
+    /**
+     * Internal method that draws the individual lines. Will be overwritten
+     * in VML fallback mode below.
+     */
+  , lines: function (el, o) {
+      var i = 0
+        , start = (o.lines - 1) * (1 - o.direction) / 2
+        , seg
+
+      function fill (color, shadow) {
+        return css(createEl(), {
+          position: 'absolute'
+        , width: o.scale * (o.length + o.width) + 'px'
+        , height: o.scale * o.width + 'px'
+        , background: color
+        , boxShadow: shadow
+        , transformOrigin: 'left'
+        , transform: 'rotate(' + ~~(360/o.lines*i + o.rotate) + 'deg) translate(' + o.scale*o.radius + 'px' + ',0)'
+        , borderRadius: (o.corners * o.scale * o.width >> 1) + 'px'
+        })
+      }
+
+      for (; i < o.lines; i++) {
+        seg = css(createEl(), {
+          position: 'absolute'
+        , top: 1 + ~(o.scale * o.width / 2) + 'px'
+        , transform: o.hwaccel ? 'translate3d(0,0,0)' : ''
+        , opacity: o.opacity
+        , animation: useCssAnimations && addAnimation(o.opacity, o.trail, start + i * o.direction, o.lines) + ' ' + 1 / o.speed + 's linear infinite'
+        })
+
+        if (o.shadow) ins(seg, css(fill('#000', '0 0 4px #000'), {top: '2px'}))
+        ins(el, ins(seg, fill(getColor(o.color, i), '0 0 1px rgba(0,0,0,.1)')))
+      }
+      return el
+    }
+
+    /**
+     * Internal method that adjusts the opacity of a single line.
+     * Will be overwritten in VML fallback mode below.
+     */
+  , opacity: function (el, i, val) {
+      if (i < el.childNodes.length) el.childNodes[i].style.opacity = val
+    }
+
+  })
+
+
+  function initVML () {
+
+    /* Utility function to create a VML tag */
+    function vml (tag, attr) {
+      return createEl('<' + tag + ' xmlns="urn:schemas-microsoft.com:vml" class="spin-vml">', attr)
+    }
+
+    // No CSS transforms but VML support, add a CSS rule for VML elements:
+    sheet.addRule('.spin-vml', 'behavior:url(#default#VML)')
+
+    Spinner.prototype.lines = function (el, o) {
+      var r = o.scale * (o.length + o.width)
+        , s = o.scale * 2 * r
+
+      function grp () {
+        return css(
+          vml('group', {
+            coordsize: s + ' ' + s
+          , coordorigin: -r + ' ' + -r
+          })
+        , { width: s, height: s }
+        )
+      }
+
+      var margin = -(o.width + o.length) * o.scale * 2 + 'px'
+        , g = css(grp(), {position: 'absolute', top: margin, left: margin})
+        , i
+
+      function seg (i, dx, filter) {
+        ins(
+          g
+        , ins(
+            css(grp(), {rotation: 360 / o.lines * i + 'deg', left: ~~dx})
+          , ins(
+              css(
+                vml('roundrect', {arcsize: o.corners})
+              , { width: r
+                , height: o.scale * o.width
+                , left: o.scale * o.radius
+                , top: -o.scale * o.width >> 1
+                , filter: filter
+                }
+              )
+            , vml('fill', {color: getColor(o.color, i), opacity: o.opacity})
+            , vml('stroke', {opacity: 0}) // transparent stroke to fix color bleeding upon opacity change
+            )
+          )
+        )
+      }
+
+      if (o.shadow)
+        for (i = 1; i <= o.lines; i++) {
+          seg(i, -2, 'progid:DXImageTransform.Microsoft.Blur(pixelradius=2,makeshadow=1,shadowopacity=.3)')
+        }
+
+      for (i = 1; i <= o.lines; i++) seg(i)
+      return ins(el, g)
+    }
+
+    Spinner.prototype.opacity = function (el, i, val, o) {
+      var c = el.firstChild
+      o = o.shadow && o.lines || 0
+      if (c && i + o < c.childNodes.length) {
+        c = c.childNodes[i + o]; c = c && c.firstChild; c = c && c.firstChild
+        if (c) c.opacity = val
+      }
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    sheet = (function () {
+      var el = createEl('style', {type : 'text/css'})
+      ins(document.getElementsByTagName('head')[0], el)
+      return el.sheet || el.styleSheet
+    }())
+
+    var probe = css(createEl('group'), {behavior: 'url(#default#VML)'})
+
+    if (!vendor(probe, 'transform') && probe.adj) initVML()
+    else useCssAnimations = vendor(probe, 'animation')
+  }
+
+  return Spinner
+
+}));
+
+define('readium_js_viewer/Spinner',['spin'], function(Spinner){
+    var opts = {
+      lines: 17, // The number of lines to draw
+      length: 0, // The length of each line
+      width: 10, // The line thickness
+      radius: 48, // The radius of the inner circle
+      corners: 1, // Corner roundness (0..1)
+      rotate: 0, // The rotation offset
+      direction: 1, // 1: clockwise, -1: counterclockwise
+      color: '#000', // #rgb or #rrggbb or array of colors
+      speed: 1, // Rounds per second
+      trail: 66, // Afterglow percentage
+      shadow: false, // Whether to render a shadow
+      hwaccel: false, // Whether to use hardware acceleration
+      className: 'spinner', // The CSS class to assign to the spinner
+      zIndex: 2e9, // The z-index (defaults to 2000000000)
+      top: '50%', // Top position relative to parent in px
+      left: '50%' // Left position relative to parent in px
+    };
+    return new Spinner(opts);
+});
 
 define("hgn!readium_js_viewer_html_templates/reader-navbar.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<div class=\"container-fluid\">");t.b("\n" + i);t.b("    <!-- Brand and toggle get grouped for better mobile display -->");t.b("\n" + i);t.b("    <div class=\"navbar-header\">");t.b("\n" + i);t.b("        <button type=\"button\" class=\"collapsed navbar-toggle\" data-toggle=\"collapse\" data-target=\"#bs-example-navbar-collapse-1\"");t.b("\n" + i);t.b("            aria-expanded=\"false\">");t.b("\n" + i);t.b("            <span class=\"sr-only\">Toggle navigation</span>");t.b("\n" + i);t.b("            <span class=\"icon-bar\"></span>");t.b("\n" + i);t.b("            <span class=\"icon-bar\"></span>");t.b("\n" + i);t.b("            <span class=\"icon-bar\"></span>");t.b("\n" + i);t.b("        </button>");t.b("\n" + i);t.b("        <a class=\"navbar-brand\" href=\"/\">");t.b("\n" + i);t.b("            <img src=\"https://getbootstrap.com/docs/4.1/assets/brand/bootstrap-solid.svg\" width=\"30\" height=\"30\" class=\"d-inline-block align-top\"");t.b("\n" + i);t.b("                alt=\"\"><strong> ReadiumJS</strong>");t.b("\n" + i);t.b("        </a>");t.b("\n" + i);t.b("    </div>");t.b("\n" + i);t.b("    <!-- Collect the nav links, forms, and other content for toggling -->");t.b("\n" + i);t.b("    <div class=\"collapse navbar-collapse\" id=\"bs-example-navbar-collapse-1\">");t.b("\n" + i);t.b("        <ul class=\"nav navbar-nav\">");t.b("\n" + i);t.b("            <button id=\"buttShowToolBar\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:1px;height=1px;\"");t.b("\n" + i);t.b("                tabindex=\"-1\" aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.ToolbarShow",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.ToolbarShow",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.ToolbarShow",c,p,0)));t.b("\"> </button>");t.b("\n");t.b("\n" + i);t.b("            <button id=\"buttHideToolBar\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\"");t.b("\n" + i);t.b("                tabindex=\"-1\" aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.ToolbarHide",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.ToolbarHide",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.ToolbarHide",c,p,0)));t.b("\"> </button>");t.b("\n");t.b("\n" + i);t.b("            <button id=\"buttNightTheme\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.NightTheme",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.NightTheme",c,p,0)));t.b("\"> </button>");t.b("\n");t.b("\n" + i);t.b("            <button id=\"buttRatePlus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysRateIncrease",c,p,0)));t.b("\"> </button>");t.b("\n");t.b("\n" + i);t.b("            <button id=\"buttRateMinus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysRateDecrease",c,p,0)));t.b("\"> </button>");t.b("\n");t.b("\n" + i);t.b("            <button id=\"buttVolumePlus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\" tabindex=\"-1\"");t.b("\n" + i);t.b("                aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysVolumeIncrease",c,p,0)));t.b("\"> </button>");t.b("\n");t.b("\n" + i);t.b("            <button id=\"buttVolumeMinus\" style=\"opacity:0;visibility:hidden;border:0;outline:0;padding:0;margin:0;width:0;height=0;\"");t.b("\n" + i);t.b("                tabindex=\"-1\" aria-hidden=\"true\" type=\"button\" title=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("\" aria-label=\"access key ");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysVolumeDecrease",c,p,0)));t.b("\"> </button>");t.b("\n" + i);t.b("        </ul>");t.b("\n");t.b("\n" + i);t.b("        <ul class=\"nav navbar-nav navbar-right\">");t.b("\n" + i);t.b("            <div id=\"backgroundAudioTrack-div\" style=\"margin-right: 4px\">");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"backgroundAudioTrack-button-play\" type=\"button\" class=\"btn navbar-btn icon-play-audio-background\"");t.b("\n" + i);t.b("                    title=\"");t.b(t.v(t.d("strings.i18n_audio_play_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_play_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.BackgroundAudioPlayPause",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-music\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"backgroundAudioTrack-button-pause\" type=\"button\" class=\"btn navbar-btn icon-pause-audio-background\"");t.b("\n" + i);t.b("                    title=\"");t.b(t.v(t.d("strings.i18n_audio_pause_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_pause_background",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.BackgroundAudioPlayPause",c,p,0)));t.b("]\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-volume-up\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n");t.b("\n" + i);t.b("            </div>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("            <!--Audioplayer Controls START-->");t.b("\n" + i);t.b("            <div id=\"audioplayer\" class=\"navbar-btn\" style=\"margin-right: 4px\">");t.b("\n");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-collapse-audio\" type=\"button\" class=\"btn icon-collapse-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_collapse",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_collapse",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-open\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-expand-audio\" type=\"button\" class=\"btn icon-expand-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_expand",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_expand",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysAdvancedPanelShowHide",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-save\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-previous-audio\" type=\"button\" class=\"btn icon-previous-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPrevious",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPrevious",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysPrevious",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-backward\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-play-audio\" type=\"button\" class=\"btn icon-play-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_play",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_play",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysPlayPause",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-play\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-pause-audio\" type=\"button\" class=\"btn icon-pause-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_pause",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_pause",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysPlayPause",c,p,0)));t.b("]\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-pause\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                <button tabindex=\"1\" id=\"btn-next-audio\" type=\"button\" class=\"btn icon-next-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysNext",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    arial-label=\"");t.b(t.v(t.d("strings.i18n_audio_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysNext",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysNext",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                    <span class=\"glyphicon glyphicon-forward\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                </button>");t.b("\n");t.b("\n" + i);t.b("                <div id=\"audioResponsive\">");t.b("\n");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-audio-volume-mute\" type=\"button\" class=\"btn icon-audio-volume-mute\" title=\"");t.b(t.v(t.d("strings.i18n_audio_mute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_mute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                        <span class=\"glyphicon glyphicon-volume-up\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                    </button>");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-audio-volume-unmute\" type=\"button\" class=\"btn icon-audio-volume-unmute\" title=\"");t.b(t.v(t.d("strings.i18n_audio_unmute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_unmute",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeMuteToggle",c,p,0)));t.b("]\">");t.b("\n" + i);t.b("                        <span class=\"glyphicon glyphicon-volume-off\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                    </button>");t.b("\n");t.b("\n" + i);t.b("                    <input tabindex=\"1\" id=\"volume-range-slider\" type=\"range\" role=\"slider\" min=\"0\" aria-value-min=\"0\" aria-valuemin=\"0\" max=\"100\"");t.b("\n" + i);t.b("                        aria-value-max=\"100\" aria-valuemax=\"100\" value=\"100\" aria-valuenow=\"100\" aria-value-now=\"100\" aria-valuetext=\"100%\"");t.b("\n" + i);t.b("                        aria-value-text=\"100%\" title=\"");t.b(t.v(t.d("strings.i18n_audio_volume",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                        arial-label=\"");t.b(t.v(t.d("strings.i18n_audio_volume",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysVolumeIncrease",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    />");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-touch-audio-enable\" type=\"button\" class=\"btn icon-touch-audio-enable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_touch_enable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_touch_enable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                        <span id=\"icon-touch-off-hand\" class=\"glyphicon glyphicon-hand-up\" aria-hidden=\"true\"></span>");t.b("\n");t.b("\n" + i);t.b("                        <span id=\"icon-touch-off\" class=\"glyphicon glyphicon-remove\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                    </button>");t.b("\n");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-touch-audio-disable\" type=\"button\" class=\"btn icon-touch-audio-disable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_touch_disable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_touch_disable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                        <span id=\"icon-touch-on-hand\" class=\"glyphicon glyphicon-hand-up\" aria-hidden=\"true\"></span>");t.b("\n");t.b("\n" + i);t.b("                        <span id=\"icon-touch-on\" class=\"glyphicon glyphicon-ok\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                    </button>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                </div>");t.b("\n");t.b("\n" + i);t.b("                <div id=\"audioExpanded\" role=\"alert\">");t.b("\n");t.b("\n" + i);t.b("                    <input tabindex=\"1\" id=\"time-range-slider\" type=\"range\" role=\"slider\" min=\"0\" aria-value-min=\"0\" aria-valuemin=\"0\" max=\"100\"");t.b("\n" + i);t.b("                        aria-value-max=\"100\" aria-valuemax=\"100\" value=\"0\" aria-valuenow=\"0\" aria-value-now=\"0\" aria-valuetext=\"0%\"");t.b("\n" + i);t.b("                        aria-value-text=\"0%\" data-value=\"0\" title=\"");t.b(t.v(t.d("strings.i18n_audio_time",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_time",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                    />");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                    <button tabindex=\"1\" id=\"btn-audio-rate\" type=\"button\" class=\"btn icon-rate-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_rate_reset",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateReset",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_rate_reset",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateReset",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysRateReset",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                        <span class=\"glyphicon glyphicon-play-circle\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                    </button>");t.b("\n");t.b("\n" + i);t.b("                    <input tabindex=\"1\" id=\"rate-range-slider\" type=\"range\" role=\"slider\" min=\"0\" aria-value-min=\"0\" aria-valuemin=\"0\" max=\"4\"");t.b("\n" + i);t.b("                        aria-value-max=\"4\" aria-valuemax=\"4\" value=\"1\" aria-valuenow=\"1\" aria-value-now=\"1\" aria-valuetext=\"1x\"");t.b("\n" + i);t.b("                        aria-value-text=\"1x\" step=\"0.1\" title=\"");t.b(t.v(t.d("strings.i18n_audio_rate",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                        aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_rate",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysRateDecrease",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.MediaOverlaysRateIncrease",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                    />");t.b("\n");t.b("\n" + i);t.b("                    <span aria-hidden=\"true\" tabindex=\"-1\" id=\"rate-range-slider-label\">1x</span>");t.b("\n");t.b("\n" + i);t.b("                    <form action=\"\" id=\"mo-sync-form\">");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"default\" id=\"mo-sync-default\" class=\"mo-sync\" checked=\"checked\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_default",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_default",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-default\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_default",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span");t.b("\n" + i);t.b("                                aria-hidden=\"true\">&#8855;</span></label>");t.b("\n");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"word\" id=\"mo-sync-word\" class=\"mo-sync\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-word\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span");t.b("\n" + i);t.b("                                aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_audio_sync_word",c,p,0)));t.b("</span></label>");t.b("\n");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"sentence\" id=\"mo-sync-sentence\" class=\"mo-sync\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-sentence\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span");t.b("\n" + i);t.b("                                aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_audio_sync_sentence",c,p,0)));t.b("</span></label>");t.b("\n");t.b("\n" + i);t.b("                        <input tabindex=\"1\" type=\"radio\" name=\"mo-sync\" value=\"paragraph\" id=\"mo-sync-paragraph\" class=\"mo-sync\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\">                        </input>");t.b("\n" + i);t.b("                        <label tabindex=\"1\" for=\"mo-sync-paragraph\" title=\"");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b(" ");t.b(t.v(t.d("strings.i18n_audio_sync",c,p,0)));t.b("\"><span");t.b("\n" + i);t.b("                                aria-hidden=\"true\">");t.b(t.v(t.d("strings.i18n_audio_sync_paragraph",c,p,0)));t.b("</span></label>");t.b("\n" + i);t.b("                    </form>");t.b("\n");t.b("\n" + i);t.b("                    <div id=\"audio-block\">");t.b("\n");t.b("\n" + i);t.b("                        <div id=\"mo-highlighters\">");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-0\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": ");t.b(t.v(t.d("strings.i18n_audio_highlight_default",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": ");t.b(t.v(t.d("strings.i18n_audio_highlight_default",c,p,0)));t.b("\" aria-selected=\"true\"");t.b("\n" + i);t.b("                                data-mohighlight=\"0\">");t.b("\n" + i);t.b("                                ");t.b(t.v(t.d("strings.i18n_audio_highlight_default",c,p,0)));t.b("\n" + i);t.b("                            </button>");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-1\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #1\"");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #1\" data-mohighlight=\"1\">");t.b("\n");t.b("\n" + i);t.b("                            </button>");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-2\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #2\"");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #2\" data-mohighlight=\"2\">");t.b("\n");t.b("\n" + i);t.b("                            </button>");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-3\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #3\"");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #3\" data-mohighlight=\"3\">");t.b("\n");t.b("\n" + i);t.b("                            </button>");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-4\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #4\"");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #4\" data-mohighlight=\"4\">");t.b("\n");t.b("\n" + i);t.b("                            </button>");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-5\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #5\"");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #5\" data-mohighlight=\"5\">");t.b("\n");t.b("\n" + i);t.b("                            </button>");t.b("\n" + i);t.b("                            <button tabindex=\"1\" id=\"mo-highlighter-6\" type=\"button\" class=\"btn btn-mo-highlighter\" title=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #6\"");t.b("\n" + i);t.b("                                aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_highlight",c,p,0)));t.b(": #6\" data-mohighlight=\"6\">");t.b("\n");t.b("\n" + i);t.b("                            </button>");t.b("\n" + i);t.b("                        </div>");t.b("\n");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-playback-scroll-enable\" type=\"button\" class=\"btn icon-playback-scroll-enable\" title=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_enable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_enable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                            <span id=\"icon-playback-scroll-off\" class=\"glyphicon glyphicon-sort-by-attributes\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                        </button>");t.b("\n");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-playback-scroll-disable\" type=\"button\" class=\"btn icon-playback-scroll-disable\" title=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_disable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_playback_scroll_disable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                            <span id=\"icon-playback-scroll-on\" class=\"glyphicon glyphicon-sort\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                        </button>");t.b("\n");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-auto-page-turn-enable\" type=\"button\" class=\"btn icon-auto-page-turn-enable\" title=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_enable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_enable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                            <span id=\"icon-auto-page-turn-off\" class=\"glyphicon glyphicon-sound-stereo\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                        </button>");t.b("\n");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-auto-page-turn-disable\" type=\"button\" class=\"btn icon-auto-page-turn-disable\" title=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_disable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_auto_page_turn_disable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                            <span id=\"icon-auto-page-turn-on\" class=\"glyphicon glyphicon-sound-dolby\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                        </button>");t.b("\n");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-skip-audio-enable\" type=\"button\" class=\"btn icon-skip-audio-enable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_skip_enable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_skip_enable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                            <span id=\"icon-skip-off\" class=\"glyphicon glyphicon-remove-circle\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                        </button>");t.b("\n");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-skip-audio-disable\" type=\"button\" class=\"btn icon-skip-audio-disable\" title=\"");t.b(t.v(t.d("strings.i18n_audio_skip_disable",c,p,0)));t.b("\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_skip_disable",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                            <span id=\"icon-skip-on\" class=\"glyphicon glyphicon-ok-circle\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                        </button>");t.b("\n");t.b("\n");t.b("\n" + i);t.b("                        <button tabindex=\"1\" id=\"btn-esc-audio\" type=\"button\" class=\"btn icon-esc-audio\" title=\"");t.b(t.v(t.d("strings.i18n_audio_esc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysEscape",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                            aria-label=\"");t.b(t.v(t.d("strings.i18n_audio_esc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.MediaOverlaysEscape",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.MediaOverlaysEscape",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                            <span class=\"glyphicon glyphicon-eject\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("                        </button>");t.b("\n");t.b("\n" + i);t.b("                    </div>");t.b("\n");t.b("\n" + i);t.b("                    <!-- div class=\"checkbox\">");t.b("\n" + i);t.b("                      <label>");t.b("\n" + i);t.b("                        <input type=\"checkbox\" value=\"false\"> Skip");t.b("\n" + i);t.b("                      </label>");t.b("\n" + i);t.b("                    </div -->");t.b("\n" + i);t.b("                </div>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <!--Audioplayer Controls END-->");t.b("\n" + i);t.b("            <div class=\"zoom-wrapper dropdown\" style=\"display:none\">");t.b("\n" + i);t.b("                <a tabindex=\"1\" href=\"#\" data-toggle=\"dropdown\"><input tabindex=\"1\" type=\"text\" value=\"100%\" disabled/><span");t.b("\n" + i);t.b("                        class=\"caret\"></span></a>");t.b("\n" + i);t.b("                <ul id=\"zoom-menu\" class=\"dropdown-menu\" role=\"menu\">");t.b("\n" + i);t.b("                    <li id=\"zoom-custom\"><a href=\"#\" tabindex=\"1\">Custom <span class=\"glyphicon glyphicon-ok\"></span></a></li>");t.b("\n" + i);t.b("                    <li id=\"zoom-fit-width\"><a href=\"#\" tabindex=\"1\">Fit Width <span class=\"glyphicon glyphicon-ok\"></span></a></li>");t.b("\n" + i);t.b("                    <li id=\"zoom-fit-screen\" class=\"active-zoom\"><a href=\"#\" tabindex=\"1\">Fit Screen <span class=\"glyphicon glyphicon-ok\"></span></a></li>");t.b("\n" + i);t.b("                </ul>");t.b("\n" + i);t.b("            </div>");t.b("\n" + i);t.b("            <button tabindex=\"1\" type=\"button\" class=\"btn navbar-btn icon-annotations\" title=\"");t.b(t.v(t.d("strings.highlight_selection",c,p,0)));t.b("\" aria-label=\"");t.b(t.v(t.d("strings.highlight_selection",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-edit\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("            </button>");t.b("\n" + i);t.b("            <button id=\"tocButt\" tabindex=\"1\" type=\"button\" class=\"btn navbar-btn icon-toc\" title=\"");t.b(t.v(t.d("strings.toc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.TocShowHideToggle",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                aria-label=\"");t.b(t.v(t.d("strings.toc",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.TocShowHideToggle",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.TocShowHideToggle",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-list\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("            </button>");t.b("\n" + i);t.b("            <button id=\"settbutt1\" tabindex=\"1\" type=\"button\" class=\"btn navbar-btn icon-settings\" data-toggle=\"modal\" data-target=\"#settings-dialog\"");t.b("\n" + i);t.b("                title=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.ShowSettingsModal",c,p,0)));t.b("]\" aria-label=\"");t.b(t.v(t.d("strings.settings",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.ShowSettingsModal",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.ShowSettingsModal",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-cog\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("            </button>");t.b("\n" + i);t.b("            <button tabindex=\"1\" id=\"buttFullScreenToggle\" type=\"button\" class=\"btn navbar-btn icon-full-screen\" title=\"");t.b(t.v(t.d("strings.enter_fullscreen",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.FullScreenToggle",c,p,0)));t.b("]\"");t.b("\n" + i);t.b("                aria-label=\"");t.b(t.v(t.d("strings.enter_fullscreen",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.FullScreenToggle",c,p,0)));t.b("]\" accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.FullScreenToggle",c,p,0)));t.b("\">");t.b("\n" + i);t.b("                <span class=\"glyphicon glyphicon-resize-full\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("            </button>");t.b("\n" + i);t.b("        </ul>");t.b("\n" + i);t.b("    </div><!-- /.navbar-collapse -->");t.b("\n" + i);t.b("</div><!-- /.container-fluid -->");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
 
@@ -67246,12 +68905,6 @@ define("hgn!readium_js_viewer_html_templates/reader-body.html", ["hogan"], funct
 
 define("hgn!readium_js_viewer_html_templates/reader-body-page-btns.html", ["hogan"], function(hogan){  var tmpl = new hogan.Template({code: function (c,p,i) { var t=this;t.b(i=i||"");t.b("<!-- Left page -->");t.b("\n" + i);t.b("<button tabindex=\"0\" id=\"left-page-btn\" class=\"page-switch-overlay-icon\" type=\"button\"");t.b("\n");t.b("\n" + i);if(t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,0,141,393,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PagePreviousAlt",c,p,0)));t.b("\"");t.b("\n" + i);});c.pop();}t.b("\n" + i);if(!t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,1,0,0,"")){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PagePrevious",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PagePreviousAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PagePreviousAlt",c,p,0)));t.b("\"");t.b("\n" + i);};t.b("\n" + i);t.b(">");t.b("\n" + i);t.b("<!-- img aria-hidden=\"true\" src=\"images/pagination1.svg\" -->");t.b("\n" + i);t.b("<span class=\"glyphicon glyphicon-chevron-left\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("</button>");t.b("\n" + i);t.b("  ");t.b("\n" + i);t.b("<!-- Right page -->");t.b("\n" + i);t.b("<button tabindex=\"0\" id=\"right-page-btn\" class=\"page-switch-overlay-icon\" type=\"button\"");t.b("\n");t.b("\n" + i);if(t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,0,1052,1292,"{{ }}")){t.rs(c,p,function(c,p,t){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_previous",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PageNextAlt",c,p,0)));t.b("\"");t.b("\n" + i);});c.pop();}t.b("\n" + i);if(!t.s(t.f("pageProgressionDirectionIsRTL",c,p,1),c,p,1,0,0,"")){t.b("title=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("aria-label=\"");t.b(t.v(t.d("strings.i18n_page_next",c,p,0)));t.b(" [");t.b(t.v(t.d("keyboard.PageNext",c,p,0)));t.b("] / [");t.b(t.v(t.d("keyboard.PageNextAlt",c,p,0)));t.b("]\"");t.b("\n");t.b("\n" + i);t.b("accesskey=\"");t.b(t.v(t.d("keyboard.accesskeys.PageNextAlt",c,p,0)));t.b("\"");t.b("\n" + i);};t.b("\n" + i);t.b(">");t.b("\n" + i);t.b("<!-- img aria-hidden=\"true\" src=\"images/pagination1.svg\" -->");t.b("\n" + i);t.b("<span class=\"glyphicon glyphicon-chevron-right\" aria-hidden=\"true\"></span>");t.b("\n" + i);t.b("</button>");t.b("\n");return t.fl(); },partials: {}, subs: {  }}, "", hogan);  function render(){ return tmpl.render.apply(tmpl, arguments); } render.template = tmpl; return render;});
 
-define('Analytics',[],function(){
-    return{
-        trackView : function(){},
-        sendEvent : function(){}
-    }
-});
 /*!
 * screenfull
 * v3.3.2 - 2017-10-27
@@ -71276,26 +72929,6 @@ return; // TODO upgrade to Hammer API v2
     };
     return gesturesHandler;
 });
-define('readium_js_viewer/versioning/ReadiumVersioning',['readium_js/Readium'], function(Readium){
-
-    var PackagedVersioning = {
-        getVersioningInfo : function(callback){
-
-            Readium.getVersion(function(version){
-
-                var versionInfo = {};
-                versionInfo = version;
-                
-                var date = new Date(version.readiumJsViewer.timestamp);
-                versionInfo.dateTimeString = date.toUTCString ? date.toUTCString() : date.toString();
-                
-                callback(versionInfo);
-            });
-        }
-    }
-    return PackagedVersioning;
-});
-
 define('readium_js_viewer/EpubReader',[
     "readium_shared_js/globalsSetup",
     "readium_shared_js/globals",
@@ -72799,15 +74432,29 @@ define('readium_js_viewer/EpubReader',[
         };
 
     });
-define('readium_js_viewer/ReadiumViewerLite',['jquery', './EpubReader', 'readium_shared_js/helpers'], function($, EpubReader, Helpers){
+define('readium_js_viewer/ReadiumViewer',['jquery', './EpubLibrary', './EpubReader', 'readium_shared_js/helpers', 'URIjs'], function($, EpubLibrary, EpubReader, Helpers, URI){
 
-    $(function(){
+    var _initialLoad = true; // replaces pushState() with replaceState() at first load 
+    var initialLoad = function(){
 
         var urlParams = Helpers.getURLQueryParams();
-    
-        // embedded, epub
-        // (epub is ebookURL)
-      EpubReader.loadUI(urlParams);
+
+        var ebookURL = urlParams['epub'];
+        var libraryURL = urlParams['epubs'];
+        var embedded = urlParams['embedded'];
+         
+         // we use triggerHandler() so that the pushState logic is invoked from the first-time open 
+         
+        if (ebookURL) {
+              //EpubReader.loadUI(urlParams);
+            var eventPayload = {embedded: embedded, epub: ebookURL, epubs: libraryURL};
+            $(window).triggerHandler('readepub', eventPayload);
+        }
+        else {
+            //EpubLibrary.loadUI({epubs: libraryURL});
+            var eventPayload = libraryURL;
+            $(window).triggerHandler('loadlibrary', eventPayload);
+        }
 
         $(document.body).on('click', function()
         {
@@ -72818,6 +74465,136 @@ define('readium_js_viewer/ReadiumViewerLite',['jquery', './EpubReader', 'readium
         {
             $(document.body).addClass("keyboard");
         });
+    };
+
+    var pushState = $.noop;
+    var replaceState = $.noop;
+
+    var isChromeExtensionPackagedApp = (typeof chrome !== "undefined") && chrome.app
+            && chrome.app.window && chrome.app.window.current; // a bit redundant?
+
+    if (!isChromeExtensionPackagedApp // "history.pushState is not available in packaged apps"
+            && window.history && window.history.pushState){
+        
+        $(window).on('popstate', function(){
+            
+            var state = history.state;
+            
+            console.debug("BROWSER HISTORY POP STATE:");
+            console.log(state);
+            
+            if (state && state.epub) {
+                readerView(state);
+            }
+            else if (state && state.epubs) {
+                libraryView(state.epubs);
+            }
+            else {
+                libraryView();
+            }
+        });
+        
+        pushState = function(data, title, url){
+            console.debug("BROWSER HISTORY PUSH STATE:");
+            //console.log(title);
+            console.log(url);
+            console.log(data);
+            history.pushState(data, title, url);
+        };
+        
+        replaceState = function(data, title, url){
+            console.debug("BROWSER HISTORY REPLACE STATE:");
+            //console.log(title);
+            console.log(url);
+            console.log(data);
+            history.replaceState(data, title, url);
+        };
+    }
+
+    var libraryView = function(libraryURL, importEPUB){
+        $(EpubReader.tooltipSelector()).tooltip('destroy');
+        
+        EpubReader.unloadUI();
+        EpubLibrary.unloadUI();
+        
+        if (libraryURL) {
+            EpubLibrary.loadUI({epubs: libraryURL});
+        } else {
+            
+            EpubLibrary.loadUI({epubs: undefined, importEPUB: importEPUB});
+        }
+    };
+
+    var readerView = function(data){
+        $(EpubReader.tooltipSelector()).tooltip('destroy');
+        
+        EpubLibrary.unloadUI();
+        EpubReader.unloadUI();
+        
+        EpubReader.loadUI(data);
+    };
+
+    $(window).on('readepub', function(e, eventPayload){
+        
+        if (!eventPayload || !eventPayload.epub) return;
+        
+        var ebookURL_filepath = Helpers.getEbookUrlFilePath(eventPayload.epub);
+        
+        var epub = eventPayload.epub;
+        if (epub && (typeof epub !== "string")) {
+            epub = ebookURL_filepath;
+        }
+        
+        ebookURL_filepath = EpubReader.ensureUrlIsRelativeToApp(ebookURL_filepath);
+        
+        var epubs = eventPayload.epubs;
+        epubs = EpubReader.ensureUrlIsRelativeToApp(epubs);
+        
+        var urlState = Helpers.buildUrlQueryParameters(undefined, {
+            epub: ebookURL_filepath,
+            epubs: (epubs ? epubs : undefined),
+            embedded: (eventPayload.embedded ? eventPayload.embedded : undefined)
+        });
+        
+        var func = _initialLoad ? replaceState : pushState;
+        func(
+            {epub: epub, epubs: epubs},
+            "Readium Viewer",
+            urlState
+        );
+    
+        _initialLoad = false;
+        
+        readerView(eventPayload);
+    });
+
+    $(window).on('loadlibrary', function(e, eventPayload){
+        var libraryURL = undefined;
+        var importEPUB = undefined;
+        if (typeof eventPayload === "string") { 
+            libraryURL = eventPayload;
+        } else { //File/Blob
+            importEPUB = eventPayload;
+        }
+        
+        libraryURL = EpubReader.ensureUrlIsRelativeToApp(libraryURL);
+        
+        var urlState = Helpers.buildUrlQueryParameters(undefined, {
+            epubs: (libraryURL ? libraryURL : undefined),
+            epub: " ",
+            goto: " "
+        });
+        
+        var func = _initialLoad ? replaceState : pushState;
+        func(
+            {epubs: libraryURL},
+            "Readium Library",
+            urlState
+        );
+        
+        _initialLoad = false;
+
+        libraryView(libraryURL, importEPUB);
     });
 
     $(document.body).tooltip({
@@ -72839,7 +74616,6 @@ define('readium_js_viewer/ReadiumViewerLite',['jquery', './EpubReader', 'readium
             $(target).tooltip('destroy');
         }, 8000);
     });
-    
     
     
     
@@ -72869,23 +74645,57 @@ define('readium_js_viewer/ReadiumViewerLite',['jquery', './EpubReader', 'readium
             fileDragNDropHTMLArea.removeClass("fileDragHover");
             
             var files = ev.target.files || ev.originalEvent.dataTransfer.files;
+
             if (files.length) {
-                var file = files[0];
-                console.log("File drag-n-drop:");
-                console.log(file.name);
-                console.log(file.type);
-                console.log(file.size);
-                
-                if (file.type == "application/epub+zip" || (/\.epub[3?]$/.test(file.name))) {
-                      EpubReader.loadUI({epub: file});
+
+                if (isChromeExtensionPackagedApp) {
+
+                    var filesArray = []; // files is a FileList, we prefer a more "primitive" array type
+                    for (var i=0; i<files.length; i++) {
+                        filesArray.push(files[i]); // files.item(i) 
+                    }
+                    var arr = [];
+                    arr.push(filesArray); // because jQuery triggerHandler() optionally takes a parameter Array!
+                    $(window).triggerHandler('loadlibrary', arr);
+                } else {
+
+                    var file = files[0];
+                    console.log("File drag-n-drop:");
+                    console.log(file.name);
+                    console.log(file.type);
+                    console.log(file.size);
+                    
+                    if (file.type == "application/epub+zip" || (/\.epub[3?]$/.test(file.name))) {
+                        var urlParams = Helpers.getURLQueryParams();
+                        //var ebookURL = urlParams['epub'];
+                        var libraryURL = urlParams['epubs'];
+                        var embedded = urlParams['embedded'];
+                        
+                        var eventPayload = {embedded: embedded, epub: file, epubs: libraryURL};
+                        $(window).triggerHandler('readepub', eventPayload);
+                    }
                 }
+
+                // var reader = new FileReader();
+                // reader.onload = function(e) {
+                    
+                //     console.log(e.target.result);
+                    
+                //     var ebookURL = e.target.result;
+                //     $(window).triggerHandler('readepub', ...);
+                // }
+                // reader.readAsDataURL(file);
+
             }
         });
     }
 
+    $(initialLoad);
 });
 
+define('readium_js_viewer', ['readium_js_viewer/ReadiumViewer'], function (main) { return main; });
 
-require(["readium_shared_js/globalsSetup", "readium_js_viewer/ReadiumViewerLite"]);
 
-//# sourceMappingURL=readium-js-viewer_all_LITE.js.map
+require(["readium_shared_js/globalsSetup", "readium_js_viewer/ReadiumViewer"]);
+
+//# sourceMappingURL=readium-js-viewer_all.js.map
