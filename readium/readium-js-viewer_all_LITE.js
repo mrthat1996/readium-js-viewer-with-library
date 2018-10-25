@@ -49148,6 +49148,7 @@ var ReflowableView = function(options, reader){
         if(_$epubHtml) {
 
             _$epubHtml.css("column-gap", _paginationInfo.columnGap + "px");
+            console.log(_paginationInfo.columnGap);
         }
     }
 
@@ -53067,7 +53068,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"12bcabd82a305f71860a2e857464746bb891b121","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540434539375},"readiumJs":{"sha":"999d7c32bcdd1184bcc248312267c6e744d737b9","clean":false,"version":"0.31.1","tag":"0.31.1-0-g999d7c3","branch":"master","release":false,"timestamp":1540434539540},"readiumSharedJs":{"sha":"7f245beba1ed97eaabce0aa5e9cf2f3b23e8f8f6","clean":false,"version":"0.31.1","tag":"0.31.1-0-g7f245be","branch":"master","release":false,"timestamp":1540434539673}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"a72c5e861f22bd983fd73b6923339a93fbccdaa7","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540438464477},"readiumJs":{"sha":"9c7e80f9beb071ff9d168ca7f93cd4b1f3c0ad7d","clean":false,"version":"0.31.1","tag":"0.31.1-1-g9c7e80f","branch":"master","release":false,"timestamp":1540438464614},"readiumSharedJs":{"sha":"7f245beba1ed97eaabce0aa5e9cf2f3b23e8f8f6","clean":false,"version":"0.31.1","tag":"0.31.1-0-g7f245be","branch":"master","release":false,"timestamp":1540438464781}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -59242,8 +59243,6 @@ define('readium_js/epub-model/package_document_parser',['jquery', 'underscore', 
             var packageElem = findXmlElemByLocalNameAnyNS(xmlDom, "package");
             var spineElem = findXmlElemByLocalNameAnyNS(xmlDom, "spine");
 
-            debugger;
-
             metadata.author = getElemText(metadataElem, "creator");
             metadata.description = getElemText(metadataElem, "description");
             metadata.epub_version =
@@ -59264,7 +59263,7 @@ define('readium_js/epub-model/package_document_parser',['jquery', 'underscore', 
 
 
             // Force using reflowable layout
-            //metadata.rendition_layout = "re-paginated";
+            metadata.rendition_layout = "reflowable";
         
 
             //http://www.idpf.org/epub/301/spec/epub-publications.html#fxl-property-viewport
@@ -71700,7 +71699,10 @@ define('readium_js_viewer/EpubReader',[
                     readium.reader.setBookStyles([{ selector: 'body * img', declarations: { 'width': '100%', 'height':'89%'} }])
                 }else if(read_type == 1){
                     // 2 page horizontal view
-                    readium.reader.setBookStyles([{ selector: 'body * img', declarations: { 'width': 'auto', 'height':'95vh', 'display':'block', 'margin':'0 auto'} }])
+                    readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-left':'-30px'} }]);
+                    readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-right':'-30px'} }]);
+                    readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'left'} }]);
+                    readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'right'} }])
                 }
             });
 
