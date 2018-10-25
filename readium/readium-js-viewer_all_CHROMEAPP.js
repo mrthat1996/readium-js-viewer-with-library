@@ -49147,10 +49147,10 @@ var ReflowableView = function(options, reader){
 
         if(_$epubHtml) {
             _$epubHtml.css("column-gap", _paginationInfo.columnGap + "px");
-            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-left':'-' + _paginationInfo.columnGap/2 +'px'} }]);
-            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-right':'-' + _paginationInfo.columnGap/2 +'px'} }]);
-            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'left'} }]);
-            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'right'} }])
+            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-right':'-' + _paginationInfo.columnGap/2 +'px'} }]);
+            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-left':'-' + _paginationInfo.columnGap/2 +'px'} }]);
+            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'right'} }]);
+            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'left'} }])
         }
     }
 
@@ -53070,7 +53070,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"58c114b9f82dc0da30947ac9bed4a29aee100ecf","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540439635215},"readiumJs":{"sha":"9c7e80f9beb071ff9d168ca7f93cd4b1f3c0ad7d","clean":false,"version":"0.31.1","tag":"0.31.1-1-g9c7e80f","branch":"master","release":false,"timestamp":1540439635351},"readiumSharedJs":{"sha":"0174a885ef5b58b9230ec8ed0ea4601cc3feada5","clean":true,"version":"0.31.1","tag":"0.31.1-1-g0174a88","branch":"master","release":false,"timestamp":1540439635520}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"a65e7b4cfeb19ebc79b293c75fb15d26b8ceabe5","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540453231474},"readiumJs":{"sha":"106b8e9c0063a57234e0466db6b655e6a854c3ad","clean":false,"version":"0.31.1","tag":"0.31.1-2-g106b8e9","branch":"master","release":false,"timestamp":1540453231594},"readiumSharedJs":{"sha":"2baa9305353c29dddc6a9ef208c1032eecd3de9e","clean":true,"version":"0.31.1","tag":"0.31.1-2-g2baa930","branch":"master","release":false,"timestamp":1540453231708}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -73649,11 +73649,14 @@ define('readium_js_viewer/EpubReader',[
                 var read_type = readium.reader.getCurrentViewType();
                 //One page view
                 if(read_type == 4){
-                    readium.reader.setBookStyles([{ selector: '.image-wrapper img', declarations: { 'width': '100%', 'height':'89%'} }])
+                    readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even) img', declarations: { 'width': '100%', 'height':'auto', 'float':'none', 'margin':'0px'} }])
+                    readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd) img', declarations: { 'width': '100%', 'height':'auto', 'float':'none', 'margin':'0px'} }])
+                    ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'auto', 'display':'block', 'margin-right':'0px'} }]);
+            ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'auto', 'display':'block', 'margin-left':'0px'} }]);
                 }else if(read_type == 1){
                     // 2 page horizontal view
-                    // readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-left':'-30px'} }]);
-                    // readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-right':'-30px'} }]);
+                    // readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-left':'-' + _paginationInfo.columnGap/2 +'px'} }]);
+                    // readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-right':'-' + _paginationInfo.columnGap/2 +'px'} }]);
                     // readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'left'} }]);
                     // readium.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'right'} }])
                 }
