@@ -49151,13 +49151,13 @@ var ReflowableView = function(options, reader){
             var rtl = ReadiumSDK.reader.getCurrentView().getPaginationInfo().isRightToLeft;
 
             if(rtl){
-                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-right':'-' + _paginationInfo.columnGap/2 +'px'} }]);
-                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-left':'-' + _paginationInfo.columnGap/2 +'px'} }]);
+                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'flex', 'aalign-items':'center', 'margin-top':'50px' ,'margin-right':'-' + _paginationInfo.columnGap/2 +'px'} }]);
+                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'flex', 'aalign-items':'center', 'margin-top':'50px', 'margin-left':'-' + _paginationInfo.columnGap/2 +'px'} }]);
                 ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'right'} }]);
                 ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'left'} }])
             }else{
-                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-left':'-' + _paginationInfo.columnGap/2 +'px'} }]);
-                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'block', 'margin-right':'-' + _paginationInfo.columnGap/2 +'px'} }]);
+                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'flex', 'aalign-items':'center', 'margin-top':'50px', 'margin-left':'-' + _paginationInfo.columnGap/2 +'px'} }]);
+                ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd)', declarations: { 'width': 'auto', 'height':'99vh', 'display':'flex', 'aalign-items':'center', 'margin-top':'50px', 'margin-right':'-' + _paginationInfo.columnGap/2 +'px'} }]);
                 ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(even) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'left'} }]);
                 ReadiumSDK.reader.setBookStyles([{ selector: '.image-wrapper:nth-child(odd) img', declarations: { 'width': 'auto', 'height':'auto', 'float':'right'} }])
             }
@@ -53081,7 +53081,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"102e5afa50e54714200bd1ff75bc9bec96b0dc0d","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540518161074},"readiumJs":{"sha":"06a54c9f477eba378b71b517a7f7422d4b35c662","clean":false,"version":"0.31.1","tag":"0.31.1-3-g06a54c9","branch":"master","release":false,"timestamp":1540518161230},"readiumSharedJs":{"sha":"3afb35d009ce39946824ff92203f08f64d9594dd","clean":true,"version":"0.31.1","tag":"0.31.1-3-g3afb35d","branch":"master","release":false,"timestamp":1540518161391}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"00f7602256f66e0c6a054be34c5a322d0b3fb5ac","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540519351528},"readiumJs":{"sha":"06a54c9f477eba378b71b517a7f7422d4b35c662","clean":false,"version":"0.31.1","tag":"0.31.1-3-g06a54c9","branch":"master","release":false,"timestamp":1540519351654},"readiumSharedJs":{"sha":"2932f198028d3da0c70a55686fd5a14b3fa96697","clean":true,"version":"0.31.1","tag":"0.31.1-4-g2932f19","branch":"master","release":false,"timestamp":1540519351770}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
