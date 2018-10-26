@@ -53081,7 +53081,7 @@ define('text',['module'], function (module) {
 });
 
 
-define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"00f7602256f66e0c6a054be34c5a322d0b3fb5ac","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540523060037},"readiumJs":{"sha":"06a54c9f477eba378b71b517a7f7422d4b35c662","clean":false,"version":"0.31.1","tag":"0.31.1-3-g06a54c9","branch":"master","release":false,"timestamp":1540523060186},"readiumSharedJs":{"sha":"2932f198028d3da0c70a55686fd5a14b3fa96697","clean":false,"version":"0.31.1","tag":"0.31.1-4-g2932f19","branch":"master","release":false,"timestamp":1540523060310}}';});
+define('text!version.json',[],function () { return '{"readiumJsViewer":{"sha":"00f7602256f66e0c6a054be34c5a322d0b3fb5ac","clean":false,"version":"0.31.0-alpha","chromeVersion":"2.31.0-alpha","branch":"develop","release":false,"timestamp":1540527091368},"readiumJs":{"sha":"06a54c9f477eba378b71b517a7f7422d4b35c662","clean":false,"version":"0.31.1","tag":"0.31.1-3-g06a54c9","branch":"master","release":false,"timestamp":1540527091488},"readiumSharedJs":{"sha":"2932f198028d3da0c70a55686fd5a14b3fa96697","clean":false,"version":"0.31.1","tag":"0.31.1-4-g2932f19","branch":"master","release":false,"timestamp":1540527091597}}';});
 
 //  Copyright (c) 2014 Readium Foundation and/or its licensees. All rights reserved.
 //  
@@ -59274,10 +59274,11 @@ define('readium_js/epub-model/package_document_parser',['jquery', 'underscore', 
             metadata.rendition_spread = getMetaElemPropertyText(metadataElem, "rendition:spread");
             metadata.rendition_flow = getMetaElemPropertyText(metadataElem, "rendition:flow");
 
-
             // Force using reflowable layout
-            metadata.rendition_layout = "reflowable";
-        
+            var direction = spineElem.getAttribute("page-progression-direction");
+            if(direction == "ttb"){
+                metadata.rendition_layout = "reflowable";
+            }
 
             //http://www.idpf.org/epub/301/spec/epub-publications.html#fxl-property-viewport
 
